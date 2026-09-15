@@ -1,0 +1,24 @@
+@import "tailwindcss/theme.css";
+@import "tailwindcss/utilities.css";
+
+#songs {
+	scrollbar-color: #4a4a4a transparent;
+	scrollbar-width: thin;
+}
+
+#songs::-webkit-scrollbar {
+	width: 6px;
+}
+
+#songs::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+#songs::-webkit-scrollbar-thumb {
+	background: #3a3a3a;
+	border-radius: 999px;
+}
+
+#songs::-webkit-scrollbar-thumb:hover {
+	background: #5a5a5a;
+}

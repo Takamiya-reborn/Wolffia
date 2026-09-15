@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>极简特化播放器</title>
+  </head>
+  <body
+    class="m-0 flex h-screen overflow-hidden bg-[#121212] font-[sans-serif] text-[#e0e0e0]"
+  >
+    <div
+      id="list"
+      class="flex w-65 flex-col overflow-hidden border-r border-[#333] p-5"
+    >
+      <h3 class="shrink-0">播放列表</h3>
+      <div id="songs" class="min-h-0 flex-1 overflow-y-auto"></div>
+    </div>
+    <div
+      id="player-zone"
+      class="flex flex-1 flex-col items-center justify-center p-5"
+    >
+      <h3 id="current-title" class="text-[#555]">请选择歌曲</h3>
+      <div
+        id="lyrics-container"
+        class="relative flex-1 w-full overflow-hidden text-center"
+      >
+        <div
+          id="lyrics-wrapper"
+          class="absolute top-1/2 w-full transition-all duration-300 ease-in-out"
+        ></div>
+      </div>
+      <audio
+        id="audio"
+        class="mt-5 w-[90%] invert-[.9] hue-rotate-180"
+        controls
+        controlsList="nodownload"
+      ></audio>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
