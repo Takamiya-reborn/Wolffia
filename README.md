@@ -162,12 +162,22 @@ uv run python -m PyInstaller --onefile --noconsole --name wolffia --add-data "sr
 ├── 夜曲.mp3
 ├── 夜曲.lrc
 ├── 晴天.flac
-└── 晴天.vtt
+└── 晴天.flac.vtt
 ```
 
-当前歌词解析逻辑使用 LRC 时间标签格式，例如：
+播放器支持 LRC 和 WebVTT（`.vtt`）歌词格式。LRC 使用去掉音频扩展名后的文件名，
+WebVTT 使用完整音频文件名再追加 `.vtt`。例如，LRC 使用以下时间标签：
 
 ```text
 [00:12.50]第一句歌词
 [00:17.80]第二句歌词
+```
+
+WebVTT 使用标准 cue 时间轴：
+
+```text
+WEBVTT
+
+00:00:12.500 --> 00:00:17.800
+第一句歌词
 ```

@@ -64,28 +64,17 @@ async function playSong(idx) {
 
 	currentLrc = [];
 	wrapper.innerHTML = "";
-	if (songs[idx].lrc) {
-		const res = await fetch(
-			`http://127.0.0.1:${serverPort}/${encodeURIComponent(songs[idx].lrc)}`,
-		);
-		const text = await res.text();
-		parseLrc(text);
-	}
+	parseLyrics(songs[idx].lyrics || []);
 }
 
-function parseLrc(text) {
-	const lines = text.split("\n");
-	lines.forEach((line) => {
-		const match = line.match(/\[(\d+):(\d+\.\d+)\](.*)/);
-		if (match) {
-			const time = parseInt(match[1]) * 60 + parseFloat(match[2]);
-			currentLrc.push({ time, text: match[3].trim() });
-			const p = document.createElement("div");
-			p.className =
-				"lrc-line py-2 text-[18px] text-[#444] transition-all duration-300";
-			p.innerText = match[3].trim();
-			wrapper.appendChild(p);
-		}
+function parseLyrics(lyrics) {
+	currentLrc = lyrics;
+	lyrics.forEach(({ text: lyricText }) => {
+		const p = document.createElement("div");
+		p.className =
+			"lrc-line py-2 text-[18px] text-[#444] transition-all duration-300";
+		p.innerText = lyricText;
+		wrapper.appendChild(p);
 	});
 }
 

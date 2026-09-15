@@ -1,7 +1,7 @@
 [project]
 name = "wolffia"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.1.1"
+description = "Windows 本地极简音乐播放器，支持本地音频播放与 LRC/WebVTT 同步歌词"
 readme = "README.md"
 authors = [
     { name = "Takamiya-reborn", email = "2196733767@qq.com" }

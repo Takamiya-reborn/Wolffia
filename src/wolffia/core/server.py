@@ -53,18 +53,23 @@ class RangeHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(chunk_size))
         self.end_headers()
 
-        with open(full_path, "rb") as f:
-            f.seek(start)
-            remaining = chunk_size
-            while remaining > 0:
-                buffer = f.read(min(8192, remaining))
-                if not buffer:
-                    break
-                self.wfile.write(buffer)
-                remaining -= len(buffer)
+        try:
+            with open(full_path, "rb") as f:
+                f.seek(start)
+                remaining = chunk_size
+                while remaining > 0:
+                    buffer = f.read(min(8192, remaining))
+                    if not buffer:
+                        break
+                    self.wfile.write(buffer)
+                    remaining -= len(buffer)
+        except (BrokenPipeError, ConnectionAbortedError, ConnectionResetError):
+            # Browsers close obsolete Range requests while seeking or buffering.
+            return
 
 
 def start_static_server(folder, port):
     os.chdir(folder)
     server = ThreadingHTTPServer(("127.0.0.1", port), RangeHandler)
+    server.daemon_threads = True
     server.serve_forever()
