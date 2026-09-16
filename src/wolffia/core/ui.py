@@ -1,6 +1,4 @@
 import webview
-import tkinter as tk
-from tkinter import filedialog
 import os
 from pathlib import Path
 import socket
@@ -8,14 +6,6 @@ import sys
 import threading
 from wolffia.core.scanner import scan_folder
 from wolffia.core.server import start_static_server
-
-
-def select_folder():
-    root = tk.Tk()
-    root.withdraw()
-    folder = filedialog.askdirectory(title="选择音乐文件夹")
-    root.destroy()
-    return folder
 
 
 # 新增：兼容打包环境的路径查找函数
@@ -35,20 +25,23 @@ class PlayerWindow:
         self.html_url = Path(html_path).resolve().as_uri()
 
     def start(self):
+        api = PlayerApi()
         window = webview.create_window(
             "极简特化播放器",
             url=self.html_url,
             width=900,
             height=650,
             background_color="#121212",
-            js_api=PlayerApi(),
+            js_api=api,
         )
         webview.start()
 
 
 class PlayerApi:
     def select_folder(self):
-        folder = select_folder()
+        window = webview.windows[0]
+        folders = window.create_file_dialog(webview.FileDialog.FOLDER)
+        folder = folders[0] if folders else None
         if not folder:
             return None
 
