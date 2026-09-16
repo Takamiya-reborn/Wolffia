@@ -86,26 +86,48 @@ wolffia/
 
 ## 开发运行
 
-### 1. 安装 Python 依赖
+### 1. 安装前后端依赖
+
+根目录脚本安装依赖：
+
+Windows PowerShell：
+
+```powershell
+.\install.ps1
+```
+
+Linux Bash：
+
+```bash
+./install.sh
+```
+
+也可以手动安装 Python 依赖：
 
 在项目根目录执行：
 
-```powershell
+```
 uv sync
+```
+
+在前端目录安装 node 依赖:
+
+```
+cd wolffia-ui
+npm i
 ```
 
 ### 2. 构建前端
 
-前端构建产物必须先生成到 Python 包的 UI 目录：
+如果没有使用安装脚本，或者前端源码发生了改动，需要重新生成 Python 包中的前端构建产物：
 
 ```powershell
 cd wolffia-ui
-npm install
 npm run build
 cd ..
 ```
 
-开发调试时也可以单独启动 Vite：
+前端单独启动：
 
 ```powershell
 cd wolffia-ui
@@ -116,7 +138,23 @@ npm run dev
 
 ### 3. 启动播放器
 
-回到项目根目录执行：
+启动脚本：
+
+Windows PowerShell：
+
+```powershell
+.\run.ps1 [build]
+```
+
+Linux Bash 环境：
+
+```bash
+./run.sh [build]
+```
+
+添加 `build` 参数时，脚本会先重新构建前端，再启动播放器。
+
+也可以使用命令行启动
 
 ```powershell
 uv run wolffia
