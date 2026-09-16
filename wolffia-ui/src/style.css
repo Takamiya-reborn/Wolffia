@@ -22,3 +22,62 @@
 #songs::-webkit-scrollbar-thumb:hover {
 	background: #5a5a5a;
 }
+
+.directory-toggle,
+.song-item {
+	box-sizing: border-box;
+	width: 100%;
+	border-bottom: 1px solid #222;
+	text-align: left;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-size: 13px;
+}
+
+.directory-toggle {
+	position: relative;
+	padding-top: 10px;
+	padding-right: 12px;
+	padding-bottom: 10px;
+	padding-left: 28px;
+	border: 0;
+	background: transparent;
+	color: #aaa;
+	cursor: pointer;
+}
+
+.directory-toggle::before {
+	position: absolute;
+	left: var(--arrow-offset, 12px);
+	top: 50%;
+	width: 6px;
+	height: 6px;
+	border-right: 1px solid currentColor;
+	border-bottom: 1px solid currentColor;
+	content: "";
+	transform: translateY(-65%) rotate(-45deg);
+	transition: transform 150ms ease;
+}
+
+.directory-toggle.expanded::before {
+	transform: translateY(-65%) rotate(45deg);
+}
+
+.directory-toggle:hover,
+.song-item:hover {
+	background: #1a1a1a;
+	color: #eee;
+}
+
+.song-item {
+	padding-top: 12px;
+	padding-right: 12px;
+	padding-bottom: 12px;
+	color: #777;
+	cursor: pointer;
+}
+
+.directory-children.hidden {
+	display: none;
+}

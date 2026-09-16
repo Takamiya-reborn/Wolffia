@@ -15,14 +15,58 @@ function initData(songsData, port) {
 	serverPort = port;
 	const container = document.getElementById("songs");
 	container.innerHTML = "";
-	songs.forEach((s, i) => {
-		const div = document.createElement("div");
-		div.className =
-			"song-item cursor-pointer overflow-hidden truncate whitespace-nowrap border-b border-[#222] p-3 text-[13px] text-[#777] hover:bg-[#1a1a1a] hover:text-[#eee]";
-		div.id = "item-" + i;
-		div.innerText = s.name;
-		div.onclick = () => playSong(i);
-		container.appendChild(div);
+	const root = { directories: new Map(), songs: [] };
+	songs.forEach((song, index) => {
+		const parts = song.path.split("/");
+		let node = root;
+		parts.slice(0, -1).forEach((directory) => {
+			if (!node.directories.has(directory)) {
+				node.directories.set(directory, {
+					directories: new Map(),
+					songs: [],
+				});
+			}
+			node = node.directories.get(directory);
+		});
+		node.songs.push({ song, index });
+	});
+	renderTree(root, container, 0);
+}
+
+function renderTree(node, container, depth) {
+	node.directories.forEach((directoryNode, name) => {
+		const directory = document.createElement("div");
+		const toggle = document.createElement("button");
+		const children = document.createElement("div");
+		directory.className = "directory-node";
+		toggle.className = "directory-toggle";
+		toggle.type = "button";
+		toggle.innerText = name;
+		toggle.style.paddingLeft = `${28 + depth * 16}px`;
+		toggle.style.setProperty("--arrow-offset", `${12 + depth * 16}px`);
+		children.className = "directory-children hidden";
+		let rendered = false;
+		toggle.onclick = () => {
+			const expanded = children.classList.toggle("hidden");
+			toggle.classList.toggle("expanded", !expanded);
+			if (!expanded && !rendered) {
+				renderTree(directoryNode, children, depth + 1);
+				rendered = true;
+			}
+		};
+		directory.append(toggle, children);
+		container.appendChild(directory);
+	});
+
+	node.songs.forEach(({ song, index }) => {
+		const item = document.createElement("div");
+		item.className = "song-item";
+		item.id = "item-" + index;
+		item.style.paddingLeft = `${28 + depth * 16}px`;
+		item.innerText = song.name;
+		item.title = song.path;
+		item.onclick = () => playSong(index);
+		container.appendChild(item);
 	});
 }
 
@@ -59,7 +103,7 @@ async function playSong(idx) {
 		.classList.add("active", "bg-[#1a1a1a]", "font-bold", "text-[#1db954]");
 	document.getElementById("current-title").innerText = songs[idx].name;
 
-	audio.src = `http://127.0.0.1:${serverPort}/${encodeURIComponent(songs[idx].name)}`;
+	audio.src = `http://127.0.0.1:${serverPort}/${encodeURIComponent(songs[idx].path)}`;
 	audio.play();
 
 	currentLrc = [];
