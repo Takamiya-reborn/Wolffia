@@ -23,6 +23,7 @@ Wolffia 面向个人本地音乐库，重点是打开即用：选择音乐文件
 - 支持 `MP3`、`FLAC`、`WAV` 和 `M4A`
 - 在音频所在目录查找同名的 `.lrc` 或 `.vtt` 歌词文件
 - 解析 LRC 时间标签并高亮当前歌词
+- 提供播放/暂停、进度、音量、静音和播放速度控制
 - 播放结束后自动播放下一首
 - 使用本机 HTTP Range 服务读取音频，适合大文件播放
 - 可打包为无控制台窗口的单个 Windows `.exe`
@@ -71,7 +72,8 @@ wolffia/
 	├── core/
 	│   ├── scanner.py              # 递归扫描音频并查找同目录歌词
 	│   ├── server.py               # 本地静态文件和 Range HTTP 服务
-	│   └── ui.py                   # pywebview 窗口、文件夹选择和 API
+	│   |── ui.py                   # pywebview 窗口、文件夹选择和 API
+	|   └── ...
 	└── ui/                         # 前端构建产物，打包时嵌入应用
 		├── index.html
 		└── assets/
