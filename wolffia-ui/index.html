@@ -6,37 +6,56 @@
     <title>Wolffia</title>
   </head>
 
-  <body
-    class="m-0 flex h-screen overflow-hidden bg-[#121212] font-[sans-serif] text-[#e0e0e0]"
-  >
-    <div
-      id="list"
-      class="flex w-65 flex-col overflow-hidden border-r border-[#333] p-5"
-    >
-      <h3 class="shrink-0">播放列表</h3>
-      <div id="songs" class="min-h-0 flex-1 overflow-y-auto"></div>
-    </div>
-    <div
-      id="player-zone"
-      class="flex flex-1 flex-col items-center justify-center p-5"
-    >
-      <h3 id="current-title" class="text-[#555]">双击选择文件夹</h3>
-      <div
-        id="lyrics-container"
-        class="relative flex-1 w-full overflow-hidden text-center"
-      >
-        <div
-          id="lyrics-wrapper"
-          class="absolute top-1/2 w-full transition-all duration-300 ease-in-out"
-        ></div>
-      </div>
-      <audio
-        id="audio"
-        class="mt-5 w-[90%] invert-[.9] hue-rotate-180"
-        controls
-        controlsList="nodownload"
-      ></audio>
-    </div>
+  <body>
+    <main class="flex h-screen min-h-0 bg-[radial-gradient(circle_at_76%_38%,#1a1f1a_0%,#121712_40%,var(--canvas)_100%)]">
+      <aside id="list" class="flex min-w-0 flex-[0_0_280px] flex-col overflow-hidden border-r border-[var(--line)] bg-[rgba(21,23,21,0.84)] px-0 pb-5 pt-7 max-[760px]:basis-[220px]">
+        <header class="mb-6 px-6 max-[760px]:px-[18px]">
+          <h1 class="m-0 text-xl font-semibold tracking-[-0.02em]">播放列表</h1>
+        </header>
+        <div id="songs" class="min-h-0 flex-1 overflow-y-auto pb-3"></div>
+      </aside>
+      <section id="player-zone" class="flex min-w-0 flex-1 flex-col items-center px-10 pb-[30px] pt-[42px] max-[760px]:px-[22px] max-[760px]:pb-[22px] max-[760px]:pt-8">
+        <header class="w-full self-stretch text-center">
+          <h2 id="current-title" class="m-0 w-full max-w-none overflow-hidden text-ellipsis whitespace-nowrap text-[clamp(17px,2vw,22px)] font-semibold tracking-[-0.02em] text-[#c9ccc6]">双击选择文件夹</h2>
+        </header>
+        <div id="lyrics-container" class="relative my-6 min-h-0 w-full max-w-[860px] flex-1 overflow-hidden text-center [mask-image:linear-gradient(transparent,black_18%,black_82%,transparent)]">
+          <div id="lyrics-wrapper" class="absolute top-1/2 w-full px-6 transition-[top] duration-300 ease-in-out"></div>
+        </div>
+        <div class="player-controls -mx-10 flex w-[calc(100%+80px)] max-w-none shrink-0 items-center gap-[18px] self-stretch border-t border-[rgba(169,201,160,0.3)] px-10 pt-[18px] shadow-[0_-10px_24px_rgba(0,0,0,0.12)] max-[760px]:-mx-[22px] max-[760px]:w-[calc(100%+44px)] max-[760px]:gap-3 max-[760px]:px-[22px]" aria-label="播放控制">
+          <button id="play-toggle" class="play-toggle grid h-[38px] w-[38px] shrink-0 place-items-center rounded-full border-0 bg-[var(--accent)] p-0 text-[#182018] transition-[transform,background] duration-150 hover:scale-105 hover:bg-[#c4e0bc] active:scale-95" type="button" aria-label="播放" title="播放">
+            <span class="play-icon" aria-hidden="true"></span>
+          </button>
+          <div class="timeline-wrap min-w-0 flex-1">
+            <div class="time-row mb-1.5 mt-0 flex justify-between px-px text-[11px] tabular-nums tracking-[0.04em] text-[var(--faint)]">
+              <span id="current-time">00:00</span>
+              <span id="duration">00:00</span>
+            </div>
+            <input id="progress" class="progress" type="range" min="0" max="100" value="0" step="0.1" aria-label="播放进度" />
+          </div>
+          <div class="extra-controls flex shrink-0 items-center gap-[9px] max-[760px]:gap-1">
+            <div class="speed-control relative">
+              <button id="playback-rate-toggle" class="speed-toggle flex min-w-[55px] items-center justify-between gap-[7px] rounded-[7px] border border-[rgba(215,221,214,0.12)] bg-[rgba(215,221,214,0.06)] px-2 py-1.5 text-[11px] text-[var(--muted)] transition-[border-color,background,color] duration-150 hover:border-[rgba(169,201,160,0.5)] hover:bg-[var(--accent-soft)] hover:text-[var(--text-strong)]" type="button" aria-haspopup="true" aria-expanded="false" aria-label="播放速度" title="播放速度">
+                <span id="playback-rate-label">1x</span>
+                <span class="speed-chevron" aria-hidden="true"></span>
+              </button>
+              <div id="playback-rate-menu" class="speed-menu absolute bottom-[calc(100%+10px)] right-0 z-[5] grid min-w-[86px] gap-0.5 rounded-[9px] border border-[rgba(215,221,214,0.14)] bg-[rgba(29,36,30,0.98)] p-[5px] shadow-[0_12px_28px_rgba(0,0,0,0.28)]" role="menu" hidden>
+                <button class="speed-option" type="button" role="menuitemradio" aria-checked="false" data-rate="0.5">0.5x</button>
+                <button class="speed-option" type="button" role="menuitemradio" aria-checked="false" data-rate="0.75">0.75x</button>
+                <button class="speed-option is-selected" type="button" role="menuitemradio" aria-checked="true" data-rate="1">1x</button>
+                <button class="speed-option" type="button" role="menuitemradio" aria-checked="false" data-rate="1.25">1.25x</button>
+                <button class="speed-option" type="button" role="menuitemradio" aria-checked="false" data-rate="1.5">1.5x</button>
+                <button class="speed-option" type="button" role="menuitemradio" aria-checked="false" data-rate="2">2x</button>
+              </div>
+            </div>
+            <button id="mute-toggle" class="icon-button grid h-[26px] w-[26px] place-items-center rounded-md border-0 bg-transparent p-0 text-[var(--muted)] transition-[color,background] duration-150 hover:bg-[rgba(215,221,214,0.08)] hover:text-[var(--text-strong)]" type="button" aria-label="静音" title="静音">
+              <span class="volume-icon" aria-hidden="true"></span>
+            </button>
+            <input id="volume" class="volume block h-4 w-16 cursor-pointer appearance-none bg-transparent max-[760px]:w-12" type="range" min="0" max="1" value="1" step="0.01" aria-label="音量" />
+          </div>
+        </div>
+        <audio id="audio" preload="metadata"></audio>
+      </section>
+    </main>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

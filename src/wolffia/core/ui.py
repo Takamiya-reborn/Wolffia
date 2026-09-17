@@ -1,11 +1,13 @@
-import webview
 import os
-from pathlib import Path
-import socket
 import sys
-import threading
-from wolffia.core.scanner import scan_folder
-from wolffia.core.server import start_static_server
+from pathlib import Path
+
+import webview
+
+from wolffia.core.api import PlayerApi
+
+MIN_WINDOW_WIDTH = 700
+MIN_WINDOW_HEIGHT = 500
 
 
 # 新增：兼容打包环境的路径查找函数
@@ -33,25 +35,8 @@ class PlayerWindow:
             height=650,
             background_color="#121212",
             js_api=api,
+            min_size=(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT),
         )
         webview.start()
 
 
-class PlayerApi:
-    def select_folder(self):
-        window = webview.windows[0]
-        folders = window.create_file_dialog(webview.FileDialog.FOLDER)
-        folder = folders[0] if folders else None
-        if not folder:
-            return None
-
-        songs = scan_folder(folder)
-        with socket.socket() as s:
-            s.bind(("127.0.0.1", 0))
-            port = s.getsockname()[1]
-
-        server_thread = threading.Thread(
-            target=start_static_server, args=(folder, port), daemon=True
-        )
-        server_thread.start()
-        return {"songs": songs, "port": port}
