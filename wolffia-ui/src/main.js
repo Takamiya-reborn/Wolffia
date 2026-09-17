@@ -3,6 +3,7 @@ import "./style.css";
 let songs = [];
 let currentIdx = -1;
 let currentLrc = [];
+let lyricElements = [];
 let activeLyricIndex = -1;
 let serverPort = 0;
 let selectingFolder = false;
@@ -11,7 +12,6 @@ let lastVolume = 1;
 const audio = document.getElementById("audio");
 const wrapper = document.getElementById("lyrics-wrapper");
 const lyricsContainer = document.getElementById("lyrics-container");
-const playerZone = document.getElementById("player-zone");
 const playToggle = document.getElementById("play-toggle");
 const progress = document.getElementById("progress");
 const currentTime = document.getElementById("current-time");
@@ -22,7 +22,6 @@ const playbackRateMenu = document.getElementById("playback-rate-menu");
 const playbackRateOptions = [...document.querySelectorAll(".speed-option")];
 const muteToggle = document.getElementById("mute-toggle");
 const volume = document.getElementById("volume");
-const playerControls = document.querySelector(".player-controls");
 
 function formatTime(seconds) {
 	if (!Number.isFinite(seconds)) return "00:00";
@@ -80,22 +79,29 @@ function renderTree(node, container, depth) {
 		const directory = document.createElement("div");
 		const toggle = document.createElement("button");
 		const children = document.createElement("div");
+		const childrenInner = document.createElement("div");
+
 		directory.className = "directory-node";
 		toggle.className = "directory-toggle relative w-full cursor-pointer overflow-hidden border-0 border-b border-[var(--line)] bg-transparent py-3 pr-3 text-left text-[13px] leading-[1.4] whitespace-nowrap text-[#8f958d] text-ellipsis hover:bg-[var(--panel-raised)] hover:text-[#f0f2ec]";
 		toggle.type = "button";
 		toggle.innerText = name;
 		toggle.style.paddingLeft = `${28 + depth * 16}px`;
 		toggle.style.setProperty("--arrow-offset", `${12 + depth * 16}px`);
-		children.className = "hidden";
+
+		children.className = "collapsible-wrapper";
+		childrenInner.className = "collapsible-inner";
+
 		let rendered = false;
 		toggle.onclick = () => {
-			const expanded = children.classList.toggle("hidden");
-			toggle.classList.toggle("expanded", !expanded);
-			if (!expanded && !rendered) {
-				renderTree(directoryNode, children, depth + 1);
+			if (!rendered) {
+				renderTree(directoryNode, childrenInner, depth + 1);
 				rendered = true;
 			}
+			const isExpanded = children.classList.toggle("expanded");
+			toggle.classList.toggle("expanded", isExpanded);
 		};
+
+		children.appendChild(childrenInner);
 		directory.append(toggle, children);
 		container.appendChild(directory);
 	});
@@ -112,7 +118,7 @@ function renderTree(node, container, depth) {
 	});
 }
 
-playerZone.ondblclick = async () => {
+lyricsContainer.ondblclick = async () => {
 	if (selectingFolder) return;
 	selectingFolder = true;
 	document.getElementById("current-title").innerText = "请选择音乐文件夹";
@@ -125,11 +131,6 @@ playerZone.ondblclick = async () => {
 	} finally {
 		selectingFolder = false;
 	}
-};
-
-playerControls.ondblclick = (event) => {
-	event.preventDefault();
-	event.stopPropagation();
 };
 
 async function playSong(idx) {
@@ -145,6 +146,7 @@ async function playSong(idx) {
 	audio.play();
 
 	currentLrc = [];
+	lyricElements = [];
 	activeLyricIndex = -1;
 	wrapper.innerHTML = "";
 	parseLyrics(songs[idx].lyrics || []);
@@ -152,17 +154,19 @@ async function playSong(idx) {
 
 function parseLyrics(lyrics) {
 	currentLrc = lyrics;
+	lyricElements = [];
 	lyrics.forEach(({ text: lyricText }) => {
 		const p = document.createElement("div");
 		p.className = "lrc-line px-0 py-[9px] text-[clamp(17px,2vw,21px)] leading-[1.45] text-[#68726c] transition-[color,font-size,opacity] duration-300 ease-in-out";
 		p.innerText = lyricText;
 		wrapper.appendChild(p);
+		lyricElements.push(p)
 	});
 	requestAnimationFrame(() => centerLyric(0));
 }
 
 function centerLyric(index) {
-	const line = wrapper.children[index];
+	const line = lyricElements[index];
 	if (!line) return;
 	const wrapperRect = wrapper.getBoundingClientRect();
 	const lineRect = line.getBoundingClientRect();
@@ -172,26 +176,27 @@ function centerLyric(index) {
 	wrapper.style.top = `${top}px`;
 }
 
-audio.ontimeupdate = () => {
-	updatePlayerState();
+function updateLyrics() {
 	const now = audio.currentTime;
 	let nextLyricIndex = activeLyricIndex;
 	for (let i = currentLrc.length - 1; i >= 0; i--) {
-		if (
-			now >= currentLrc[i].time &&
-			currentLrc[i].text.trim()
-		) {
+		if (now >= currentLrc[i].time && currentLrc[i].text.trim()) {
 			nextLyricIndex = i;
 			break;
 		}
 	}
 	if (nextLyricIndex >= 0 && nextLyricIndex !== activeLyricIndex) {
 		activeLyricIndex = nextLyricIndex;
-		document.querySelectorAll(".lrc-line").forEach((line, idx) => {
+		lyricElements.forEach((line, idx) => {
 			line.classList.toggle("lrc-active", idx === activeLyricIndex);
 		});
 		requestAnimationFrame(() => centerLyric(activeLyricIndex));
 	}
+}
+
+audio.ontimeupdate = () => {
+	updatePlayerState();
+	updateLyrics();
 };
 
 playToggle.onclick = () => {
@@ -207,6 +212,7 @@ progress.oninput = () => {
 	if (!Number.isFinite(audio.duration)) return;
 	audio.currentTime = (Number(progress.value) / 100) * audio.duration;
 	updatePlayerState();
+	updateLyrics();
 };
 
 function setPlaybackRate(rate) {
@@ -246,7 +252,7 @@ playbackRateOptions.forEach((option, index) => {
 			closePlaybackRateMenu();
 			playbackRateToggle.focus();
 		}
-};
+	};
 });
 
 playbackRateToggle.onkeydown = (event) => {
