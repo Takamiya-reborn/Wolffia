@@ -1,24 +1,30 @@
 import os
 import sys
-from pathlib import Path
-
 import webview
-
+from pathlib import Path
 from wolffia.core.api import PlayerApi
 
 MIN_WINDOW_WIDTH = 700
 MIN_WINDOW_HEIGHT = 500
 
 
-# 新增：兼容打包环境的路径查找函数
 def get_asset_path(filename):
-    # 如果是被 PyInstaller 打包成 exe 运行的
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        base_dir = sys._MEIPASS
-    # 否则是正常的开发环境
+    if getattr(sys, "frozen", False) or "__compiled__" in globals():
+        roots = [
+            Path(getattr(sys, "_MEIPASS", "")),
+            Path(sys.executable).resolve().parent,
+            Path(__file__).resolve().parents[1],
+            Path(__file__).resolve().parents[2],
+        ]
     else:
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base_dir, "ui", filename)
+        roots = [Path(__file__).resolve().parents[1]]
+
+    for root in roots:
+        asset_path = root / "ui" / filename
+        if asset_path.is_file():
+            return os.fspath(asset_path)
+
+    return os.fspath(roots[0] / "ui" / filename)
 
 
 class PlayerWindow:
@@ -29,7 +35,7 @@ class PlayerWindow:
     def start(self):
         api = PlayerApi()
         window = webview.create_window(
-            "极简特化播放器",
+            "Wolffia",
             url=self.html_url,
             width=900,
             height=650,
@@ -38,5 +44,3 @@ class PlayerWindow:
             min_size=(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT),
         )
         webview.start()
-
-

@@ -53,6 +53,7 @@ Wolffia 面向个人本地音乐库，重点是打开即用：选择音乐文件
 | 技术                                                                                                  | 用途                                                              |
 | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
 | ![PyInstaller](https://img.shields.io/badge/PyInstaller-Packaging-3D3D3D?logo=python&logoColor=white) | 将 Python 程序、前端静态文件和运行时依赖打包为 Windows 可执行文件 |
+| ![Nuitka](https://img.shields.io/badge/Nuitka-Compiler-4B8BBE?logo=python&logoColor=white)             | 将 Python 程序编译并打包为 Windows 可执行文件                     |
 
 ## 项目结构
 
@@ -60,7 +61,10 @@ Wolffia 面向个人本地音乐库，重点是打开即用：选择音乐文件
 wolffia/
 ├── main.py                         # PyInstaller 使用的程序入口
 ├── pyproject.toml                  # Python 项目元数据、依赖和 wolffia 命令
-├── wolffia.spec                    # PyInstaller 打包配置
+├── wolffia-onedir.spec             # PyInstaller 目录模式配置
+├── wolffia-onefile.spec            # PyInstaller 单文件模式配置
+├── nuitka-onedir.ps1               # Nuitka 目录模式打包脚本
+├── nuitka-onefile.ps1              # Nuitka 单文件模式打包脚本
 ├── wolffia-ui/                     # 前端源码项目
 │   ├── package.json                # npm 脚本和前端开发依赖
 │   ├── vite.config.js              # Vite 配置，构建到 src/wolffia/ui
@@ -84,9 +88,11 @@ wolffia/
 ## 环境要求
 
 - Windows 桌面环境
-- Python `>= 3.13`
+- [Python](https://www.python.org/) `>= 3.13`
 - [uv](https://docs.astral.sh/uv/)
-- Node.js 和 npm（仅在修改或重新构建前端时需要）
+- [Node.js](https://nodejs.org/) 和 npm（仅在修改或重新构建前端时需要）
+- C/C++ 编译器（Nuitka需要将python转换成C/C++，然后编译）
+> 注：如果没有，首次打包会自行下载C/C++编译器
 
 ## 开发运行
 
@@ -168,29 +174,51 @@ uv run wolffia
 
 ## 构建 Windows 程序
 
-如果前端源码有改动，先完成前端构建，然后在项目根目录执行：
+如果前端源码有改动，先完成前端构建，然后在项目根目录选择一种打包方式。
+
+### 使用 PyInstaller
+
+目录模式：
 
 ```powershell
-uv run python -m PyInstaller wolffia.spec
+uv run python -m PyInstaller wolffia-onedir.spec
 ```
 
-`wolffia.spec` 会将 `src/wolffia/ui/` 作为数据目录嵌入程序，并生成无控制台窗口的可执行文件。构建结果位于：
+单文件模式：
 
-```text
-dist/wolffia.exe
+```powershell
+uv run python -m PyInstaller wolffia-onefile.spec
 ```
 
-也可以直接使用命令行配置打包：
+两个 spec 文件都会将 `src/wolffia/ui/` 作为数据目录嵌入程序，并生成无控制台窗口的 `wolffia.exe`。目录模式会生成程序目录及其依赖文件，单文件模式会生成独立的可执行文件，构建结果位于 `dist/` 目录。
+
+也可以直接使用命令行配置打包单文件版本：
 
 ```powershell
 uv run python -m PyInstaller --onefile --noconsole --name wolffia --add-data "src\wolffia\ui;ui" main.py
 ```
 
+### 使用 Nuitka
+
+目录模式：
+
+```powershell
+.\nuitka-onedir.ps1
+```
+
+单文件模式：
+
+```powershell
+.\nuitka-onefile.ps1
+```
+
+两个脚本都会使用 Nuitka 编译 Python 程序，将 `src/wolffia/ui/` 作为 `ui` 数据目录嵌入，并关闭控制台窗口。目录模式的构建结果位于 `nuitka/onedir/`，单文件模式的构建结果位于 `nuitka/onefile/`。
+
 ## 部署与使用
 
 本项目是 Windows 本地桌面应用，不需要部署到服务器，也不需要数据库或外部服务。最简单的分发方式是：
 
-1. 在 Windows 环境完成依赖安装、前端构建和 PyInstaller 打包。
+1. 在 Windows 环境完成依赖安装、前端构建和 PyInstaller 或 Nuitka 打包。
 2. 双击运行程序，并选择目标电脑上的音乐目录。
 
 目标电脑通常不需要安装 Python、Node.js 或 uv，因为依赖已经由 PyInstaller 打包进 `.exe`。程序运行时会在 `127.0.0.1` 上随机选择空闲端口，仅供当前桌面窗口访问。

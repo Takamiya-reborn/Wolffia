@@ -5,6 +5,7 @@ __pycache__/
 *.pyd
 build/
 dist/
+nuitka/
 src/wolffia/ui/
 wheels/
 *.egg-info

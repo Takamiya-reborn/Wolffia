@@ -1,6 +1,6 @@
 [project]
 name = "wolffia"
-version = "0.1.1"
+version = "0.1.2"
 description = "Windows 本地极简音乐播放器，支持本地音频播放与 LRC/WebVTT 同步歌词"
 readme = "README.md"
 authors = [
@@ -18,3 +18,8 @@ wolffia = "wolffia:main"
 [build-system]
 requires = ["uv_build>=0.12.10,<0.13.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "nuitka[onefile]>=4.2.1",
+]

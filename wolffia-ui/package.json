@@ -1,6 +1,6 @@
 {
   "name": "wolffia-ui",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Wolffia 本地音乐播放器的桌面前端，支持同步歌词显示",
   "private": true,
   "type": "module",
