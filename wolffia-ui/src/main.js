@@ -1,4 +1,28 @@
 import "./style.css";
+import {
+	ChevronUp,
+	ListMusic,
+	Pause,
+	Play,
+	Repeat,
+	Shuffle,
+	Volume2,
+	VolumeX,
+	createIcons,
+} from "lucide";
+
+createIcons({
+	icons: {
+		ChevronUp,
+		ListMusic,
+		Pause,
+		Play,
+		Repeat,
+		Shuffle,
+		Volume2,
+		VolumeX,
+	},
+});
 
 let songs = [];
 let currentIdx = -1;
@@ -8,6 +32,7 @@ let activeLyricIndex = -1;
 let serverPort = 0;
 let selectingFolder = false;
 let lastVolume = 1;
+let loopMode = 'once'; // 'once' | 'loop' | 'random'
 
 const audio = document.getElementById("audio");
 const wrapper = document.getElementById("lyrics-wrapper");
@@ -22,6 +47,7 @@ const playbackRateMenu = document.getElementById("playback-rate-menu");
 const playbackRateOptions = [...document.querySelectorAll(".speed-option")];
 const muteToggle = document.getElementById("mute-toggle");
 const volume = document.getElementById("volume");
+const loopModeToggle = document.getElementById('loop-mode-toggle');
 
 function formatTime(seconds) {
 	if (!Number.isFinite(seconds)) return "00:00";
@@ -194,6 +220,96 @@ function updateLyrics() {
 	}
 }
 
+function playNext() {
+	if (currentIdx < 0 || currentIdx >= songs.length) return;
+
+	const currentSong = songs[currentIdx];
+	const currentPath = currentSong.path;
+	const currentDir = currentPath.substring(0, currentPath.lastIndexOf('/'));
+
+	// 收集同一目录的所有歌曲
+	const directorySongs = [];
+	songs.forEach((song, index) => {
+		const songDir = song.path.substring(0, song.path.lastIndexOf('/'));
+		if (songDir === currentDir) {
+			directorySongs.push(index);
+		}
+	});
+
+	if (directorySongs.length === 0) return;
+
+	switch (loopMode) {
+		case 'once':
+			// 单次播放：播放下一首，如果已经是最后一首则回到第一首但暂停
+			const currentPos = directorySongs.indexOf(currentIdx);
+			if (currentPos < directorySongs.length - 1) {
+				playSong(directorySongs[currentPos + 1]);
+			} else {
+				// 如果是最后一首，回到第一首但立即暂停
+				playSong(directorySongs[0]);
+				audio.pause();
+			}
+			break;
+
+		case 'loop':
+			// 循环播放：播放下一首，如果是最后一首则回到第一首
+			const loopCurrentPos = directorySongs.indexOf(currentIdx);
+			if (loopCurrentPos < directorySongs.length - 1) {
+				playSong(directorySongs[loopCurrentPos + 1]);
+			} else {
+				playSong(directorySongs[0]);
+			}
+			break;
+
+		case 'random':
+			// 随机播放：随机选择一首（除了当前播放的）
+			const availableSongs = directorySongs.filter(index => index !== currentIdx);
+			if (availableSongs.length > 0) {
+				playSong(availableSongs[Math.floor(Math.random() * availableSongs.length)]);
+			} else if (directorySongs.length > 0) {
+				// 如果只有一首歌，播放它自己
+				playSong(directorySongs[0]);
+			}
+			break;
+	}
+}
+
+function updateLoopModeUI() {
+	loopModeToggle.classList.remove('is-once', 'is-looping', 'is-random');
+	switch (loopMode) {
+		case 'once':
+			loopModeToggle.classList.add('is-once');
+			loopModeToggle.setAttribute('aria-label', '单次播放');
+			loopModeToggle.title = '单次播放';
+			break;
+		case 'loop':
+			loopModeToggle.classList.add('is-looping');
+			loopModeToggle.setAttribute('aria-label', '循环播放');
+			loopModeToggle.title = '循环播放';
+			break;
+		case 'random':
+			loopModeToggle.classList.add('is-random');
+			loopModeToggle.setAttribute('aria-label', '随机播放');
+			loopModeToggle.title = '随机播放';
+			break;
+	}
+}
+
+loopModeToggle.onclick = () => {
+	// 按照 once -> loop -> random -> once 的顺序切换
+	if (loopMode === 'once') {
+		loopMode = 'loop';
+	} else if (loopMode === 'loop') {
+		loopMode = 'random';
+	} else {
+		loopMode = 'once';
+	}
+	updateLoopModeUI();
+};
+
+// 初始化循环模式UI
+updateLoopModeUI();
+
 audio.ontimeupdate = () => {
 	updatePlayerState();
 	updateLyrics();
@@ -304,7 +420,7 @@ window.addEventListener("resize", () => {
 
 audio.onended = () => {
 	updatePlayerState();
-	if (currentIdx < songs.length - 1) playSong(currentIdx + 1);
+	playNext();
 };
 
 updatePlayerState();
