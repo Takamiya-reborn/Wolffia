@@ -1,33 +1,33 @@
 import "./style.css";
 import {
-	ChevronRight,
-	ChevronUp,
-	Folder,
-	ListMusic,
-	Music,
-	Pause,
 	Play,
 	List,
+	Music,
+	Pause,
+	Folder,
 	Repeat,
 	Shuffle,
 	Volume2,
 	VolumeX,
+	ListMusic,
+	ChevronUp,
+	ChevronRight,
 	createIcons,
 } from "lucide";
 
 const lucideIcons = {
-	ChevronRight,
-	ChevronUp,
-	Folder,
-	ListMusic,
-	Music,
-	Pause,
 	Play,
 	List,
+	Music,
+	Pause,
+	Folder,
 	Repeat,
 	Shuffle,
 	Volume2,
 	VolumeX,
+	ListMusic,
+	ChevronUp,
+	ChevronRight,
 };
 
 createIcons({ icons: lucideIcons });
@@ -40,6 +40,7 @@ let currentLrc = [];
 let lyricElements = [];
 let activeLyricIndex = -1;
 let selectingFolder = false;
+let contextMenuSongPath = null;
 let loopMode = 'once'; // 'once' | 'loop' | 'random'
 
 const audio = document.getElementById("audio");
@@ -53,6 +54,7 @@ const currentTime = document.getElementById("current-time");
 const playlistCount = document.getElementById("playlist-count");
 const loopModeToggle = document.getElementById('loop-mode-toggle');
 const lyricsContainer = document.getElementById("lyrics-container");
+const songContextMenu = document.getElementById("song-context-menu");
 const playbackRateMenu = document.getElementById("playback-rate-menu");
 const playbackRateLabel = document.getElementById("playback-rate-label");
 const playbackRateToggle = document.getElementById("playback-rate-toggle");
@@ -112,12 +114,12 @@ function initData(songsData, port) {
 
 function renderTree(node, container) {
 	node.directories.forEach((directoryNode, name) => {
-		const directory = document.createElement("div");
-		const toggle = document.createElement("button");
 		const chevron = document.createElement("i");
 		const folderIcon = document.createElement("i");
-		const folderName = document.createElement("span");
 		const children = document.createElement("div");
+		const directory = document.createElement("div");
+		const toggle = document.createElement("button");
+		const folderName = document.createElement("span");
 		const childrenInner = document.createElement("div");
 
 		directory.className = "directory-node";
@@ -175,11 +177,53 @@ function renderTree(node, container) {
 		item.append(songIcon, songName);
 		item.title = song.path;
 		item.onclick = () => playSong(index);
+		item.oncontextmenu = (event) => {
+			event.preventDefault();
+			contextMenuSongPath = song.path;
+			openSongContextMenu(event.clientX, event.clientY);
+		};
 		container.appendChild(item);
 	});
 
 	createIcons({ icons: lucideIcons });
 }
+
+function closeSongContextMenu() {
+	songContextMenu.hidden = true;
+	contextMenuSongPath = null;
+}
+
+function openSongContextMenu(clientX, clientY) {
+	songContextMenu.hidden = false;
+	const menuRect = songContextMenu.getBoundingClientRect();
+	const left = Math.min(clientX, window.innerWidth - menuRect.width - 8);
+	const top = Math.min(clientY, window.innerHeight - menuRect.height - 8);
+	songContextMenu.style.left = `${Math.max(8, left)}px`;
+	songContextMenu.style.top = `${Math.max(8, top)}px`;
+}
+
+songContextMenu.onclick = async (event) => {
+	const action = event.target.closest("[data-action]")?.dataset.action;
+	if (!action || !contextMenuSongPath) return;
+
+	const songPath = contextMenuSongPath;
+	closeSongContextMenu();
+	if (action === "open-in-explorer") {
+		await window.pywebview.api.open_in_explorer(songPath);
+	} else if (action === "show-properties") {
+		await window.pywebview.api.show_properties(songPath);
+	}
+};
+
+document.addEventListener("click", (event) => {
+	if (!songContextMenu.hidden && !songContextMenu.contains(event.target)) {
+		closeSongContextMenu();
+	}
+});
+
+document.addEventListener("keydown", (event) => {
+	if (event.key === "Escape") closeSongContextMenu();
+});
 
 lyricsContainer.ondblclick = async () => {
 	if (selectingFolder) return;

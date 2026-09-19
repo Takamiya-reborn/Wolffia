@@ -34,6 +34,19 @@
           >
         </header>
         <div id="songs" class="min-h-0 flex-1 overflow-y-auto pb-3"></div>
+        <div
+          id="song-context-menu"
+          class="song-context-menu"
+          role="menu"
+          hidden
+        >
+          <button type="button" role="menuitem" data-action="open-in-explorer">
+            在资源管理器中打开
+          </button>
+          <button type="button" role="menuitem" data-action="show-properties">
+            属性
+          </button>
+        </div>
       </aside>
       <section
         id="player-zone"
@@ -77,21 +90,6 @@
               class="icon-pause block h-4.5 w-4.5"
               aria-hidden="true"
             ></i>
-          </button>
-          <button
-            id="loop-mode-toggle"
-            class="loop-mode-toggle grid h-8 w-8 shrink-0 place-items-center rounded-lg border-0 bg-transparent p-0 text-(--muted) transition-[color,background] duration-150 hover:bg-[rgba(215,221,214,0.08)] hover:text-(--text-strong) [&_svg]:block [&_svg]:h-4 [&_svg]:w-4"
-            type="button"
-            aria-label="循环模式"
-            title="循环模式"
-          >
-            <i
-              data-lucide="list-music"
-              class="icon-once"
-              aria-hidden="true"
-            ></i>
-            <i data-lucide="repeat" class="icon-loop" aria-hidden="true"></i>
-            <i data-lucide="shuffle" class="icon-random" aria-hidden="true"></i>
           </button>
           <span
             id="current-time"
@@ -192,6 +190,21 @@
               </button>
             </div>
           </div>
+          <button
+            id="loop-mode-toggle"
+            class="loop-mode-toggle grid h-8 w-8 shrink-0 place-items-center rounded-lg border-0 bg-transparent p-0 text-(--muted) transition-[color,background] duration-150 hover:bg-[rgba(215,221,214,0.08)] hover:text-(--text-strong) [&_svg]:block [&_svg]:h-4 [&_svg]:w-4"
+            type="button"
+            aria-label="循环模式"
+            title="循环模式"
+          >
+            <i
+              data-lucide="list-music"
+              class="icon-once"
+              aria-hidden="true"
+            ></i>
+            <i data-lucide="repeat" class="icon-loop" aria-hidden="true"></i>
+            <i data-lucide="shuffle" class="icon-random" aria-hidden="true"></i>
+          </button>
           <button
             id="mute-toggle"
             class="icon-button grid h-8 w-8 shrink-0 place-items-center rounded-lg border-0 bg-transparent p-0 text-(--muted) transition-[color,background] duration-150 hover:bg-[rgba(215,221,214,0.08)] hover:text-(--text-strong) [&_svg]:block [&_svg]:h-4 [&_svg]:w-4"
