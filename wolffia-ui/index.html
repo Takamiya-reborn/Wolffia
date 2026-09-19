@@ -78,7 +78,7 @@
             class="play-toggle grid h-10 w-10 shrink-0 place-items-center rounded-full border-0 bg-(--accent) p-0 text-[#182018] transition-[transform,background] duration-150 hover:scale-105 hover:bg-[#c4e0bc] active:scale-95"
             type="button"
             aria-label="播放"
-            title="播放"
+            title="播放 (空格)"
           >
             <i
               data-lucide="play"
@@ -210,7 +210,7 @@
             class="icon-button grid h-8 w-8 shrink-0 place-items-center rounded-lg border-0 bg-transparent p-0 text-(--muted) transition-[color,background] duration-150 hover:bg-[rgba(215,221,214,0.08)] hover:text-(--text-strong) [&_svg]:block [&_svg]:h-4 [&_svg]:w-4"
             type="button"
             aria-label="静音"
-            title="静音"
+            title="静音 (M)"
           >
             <i
               data-lucide="volume-2"
@@ -219,16 +219,20 @@
             ></i>
             <i data-lucide="volume-x" class="icon-muted" aria-hidden="true"></i>
           </button>
-          <input
-            id="volume"
-            class="volume block h-4 w-16 shrink-0 cursor-pointer appearance-none bg-transparent max-[760px]:w-12"
-            type="range"
-            min="0"
-            max="1"
-            value="1"
-            step="0.01"
-            aria-label="音量"
-          />
+          <div class="relative flex shrink-0 items-center">
+            <input
+              id="volume"
+              class="volume block h-4 w-16 cursor-pointer appearance-none bg-transparent max-[760px]:w-12"
+              type="range"
+              min="0"
+              max="1"
+              value="1"
+              step="0.01"
+              aria-label="音量"
+              title="音量 (↑/↓)"
+            />
+            <span id="volume-value" class="volume-bubble">100%</span>
+          </div>
         </div>
         <audio id="audio" preload="metadata"></audio>
       </section>

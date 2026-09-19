@@ -221,6 +221,30 @@ body {
 	color: var(--accent);
 }
 
+.volume-bubble {
+	position: absolute;
+	bottom: calc(100% + 10px);
+	left: 50%;
+	transform: translateX(-50%);
+	padding: 3px 8px;
+	border: 1px solid rgba(215, 221, 214, 0.14);
+	border-radius: 999px;
+	background: rgba(29, 36, 30, 0.98);
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+	color: var(--muted);
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0.04em;
+	white-space: nowrap;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+
+.volume-bubble.is-visible {
+	opacity: 1;
+}
+
 .volume::-webkit-slider-runnable-track {
 	height: 3px;
 	border-radius: 999px;

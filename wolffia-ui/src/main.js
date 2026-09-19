@@ -45,6 +45,7 @@ let loopMode = 'once'; // 'once' | 'loop' | 'random'
 
 const audio = document.getElementById("audio");
 const volume = document.getElementById("volume");
+const volumeValue = document.getElementById("volume-value");
 const duration = document.getElementById("duration");
 const progress = document.getElementById("progress");
 const wrapper = document.getElementById("lyrics-wrapper");
@@ -77,15 +78,16 @@ function updatePlayerState() {
 	const isPlaying = !audio.paused;
 	playToggle.classList.toggle("is-playing", isPlaying);
 	playToggle.setAttribute("aria-label", isPlaying ? "暂停" : "播放");
-	playToggle.title = isPlaying ? "暂停" : "播放";
+	playToggle.title = isPlaying ? "暂停 (空格)" : "播放 (空格)";
 	const volumePercentage = audio.muted ? 0 : audio.volume * 100;
 	volume.value = volumePercentage / 100;
 	volume.style.setProperty("--volume", `${volumePercentage}%`);
+	volumeValue.innerText = `${Math.round(volumePercentage)}%`;
 	const isMuted = audio.muted || audio.volume === 0;
 	muteToggle.classList.toggle("is-muted", isMuted);
 	muteToggle.setAttribute("aria-label", isMuted ? "取消静音" : "静音");
 	muteToggle.setAttribute("aria-pressed", isMuted);
-	muteToggle.title = isMuted ? "取消静音" : "静音";
+	muteToggle.title = isMuted ? "取消静音 (M)" : "静音 (M)";
 }
 
 function initData(songsData, port) {
@@ -392,7 +394,6 @@ loopModeToggle.onclick = () => {
 	updateLoopModeUI();
 };
 
-// 初始化循环模式UI
 updateLoopModeUI();
 
 audio.ontimeupdate = () => {
@@ -400,14 +401,28 @@ audio.ontimeupdate = () => {
 	updateLyrics();
 };
 
-playToggle.onclick = () => {
+function togglePlay() {
 	if (!audio.src) return;
 	if (audio.paused) {
 		audio.play();
 	} else {
 		audio.pause();
 	}
-};
+}
+
+function toggleMute() {
+	if (audio.muted || audio.volume === 0) {
+		audio.volume = lastVolume || 0.7;
+		audio.muted = false;
+	} else {
+		lastVolume = audio.volume;
+		audio.muted = true;
+	}
+	updatePlayerState();
+	showVolumeValue();
+}
+
+playToggle.onclick = togglePlay;
 
 progress.oninput = () => {
 	if (!Number.isFinite(audio.duration)) return;
@@ -459,6 +474,7 @@ playbackRateOptions.forEach((option, index) => {
 playbackRateToggle.onkeydown = (event) => {
 	if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
 		event.preventDefault();
+		event.stopPropagation();
 		if (playbackRateMenu.hidden) {
 			playbackRateMenu.hidden = false;
 			playbackRateToggle.setAttribute("aria-expanded", "true");
@@ -470,23 +486,109 @@ playbackRateToggle.onkeydown = (event) => {
 
 document.addEventListener("click", closePlaybackRateMenu);
 
-muteToggle.onclick = () => {
-	if (audio.muted || audio.volume === 0) {
-		audio.volume = lastVolume || 0.7;
-		audio.muted = false;
-	} else {
-		lastVolume = audio.volume;
-		audio.muted = true;
-	}
-	updatePlayerState();
-};
+muteToggle.onclick = toggleMute;
 
 volume.oninput = () => {
 	audio.volume = Number(volume.value);
 	if (audio.volume > 0) lastVolume = audio.volume;
 	audio.muted = audio.volume === 0;
 	updatePlayerState();
+	showVolumeValue();
 };
+
+volume.addEventListener(
+	"wheel",
+	(event) => {
+		event.preventDefault();
+		changeVolumeBy(event.deltaY < 0 ? VOLUME_STEP : -VOLUME_STEP);
+	},
+	{ passive: false },
+);
+
+let volumeBubbleTimer = 0;
+let volumeHovering = false;
+
+function showVolumeValue() {
+	volumeValue.classList.add("is-visible");
+	if (volumeHovering) return;
+	clearTimeout(volumeBubbleTimer);
+	volumeBubbleTimer = setTimeout(() => {
+		volumeValue.classList.remove("is-visible");
+	}, 1200);
+}
+
+volume.addEventListener("mouseenter", () => {
+	volumeHovering = true;
+	clearTimeout(volumeBubbleTimer);
+	volumeValue.classList.add("is-visible");
+});
+
+volume.addEventListener("mouseleave", () => {
+	volumeHovering = false;
+	volumeValue.classList.remove("is-visible");
+});
+
+const SEEK_STEP = 5;
+const VOLUME_STEP = 0.05;
+
+function seekBy(seconds) {
+	if (!Number.isFinite(audio.duration)) return;
+	audio.currentTime = Math.min(
+		Math.max(audio.currentTime + seconds, 0),
+		audio.duration,
+	);
+	updatePlayerState();
+	updateLyrics();
+}
+
+function changeVolumeBy(delta) {
+	const next = Math.min(Math.max(audio.volume + delta, 0), 1);
+	audio.volume = next;
+	if (next > 0) lastVolume = next;
+	audio.muted = next === 0;
+	updatePlayerState();
+	showVolumeValue();
+}
+
+document.addEventListener("keydown", (event) => {
+	if (!playbackRateMenu.hidden) return;
+	if (
+		event.target instanceof Element &&
+		event.target.closest("#playback-rate-menu")
+	)
+		return;
+	switch (event.key) {
+		case "Tab":
+			event.preventDefault();
+			break;
+		case " ":
+			if (event.repeat) return;
+			event.preventDefault();
+			togglePlay();
+			break;
+		case "ArrowLeft":
+			event.preventDefault();
+			seekBy(-SEEK_STEP);
+			break;
+		case "ArrowRight":
+			event.preventDefault();
+			seekBy(SEEK_STEP);
+			break;
+		case "ArrowUp":
+			event.preventDefault();
+			changeVolumeBy(VOLUME_STEP);
+			break;
+		case "ArrowDown":
+			event.preventDefault();
+			changeVolumeBy(-VOLUME_STEP);
+			break;
+		case "m":
+		case "M":
+			if (event.repeat) return;
+			toggleMute();
+			break;
+	}
+});
 
 audio.onloadedmetadata = updatePlayerState;
 audio.onplay = updatePlayerState;
