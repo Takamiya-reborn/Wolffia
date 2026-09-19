@@ -1,14 +1,138 @@
-import ctypes
 import os
+import sys
+import ctypes
+import webview
 import subprocess
 from pathlib import Path
+from ctypes import wintypes
 
-import webview
+
+class ApplicationMutex:
+    """应用级单例互斥锁"""
+
+    def __init__(self, name):
+        self._handle = None
+        if sys.platform != "win32":
+            return
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.CreateMutexW.argtypes = (
+            wintypes.LPVOID,
+            wintypes.BOOL,
+            wintypes.LPCWSTR,
+        )
+        kernel32.CreateMutexW.restype = wintypes.HANDLE
+        kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
+        kernel32.CloseHandle.restype = wintypes.BOOL
+
+        self._kernel32 = kernel32
+        self._handle = kernel32.CreateMutexW(None, False, name)
+        if not self._handle:
+            raise ctypes.WinError(ctypes.get_last_error())
+
+        if ctypes.get_last_error() == 183:  # _ERROR_ALREADY_EXISTS
+            kernel32.CloseHandle(self._handle)
+            self._handle = None
+
+    @property
+    def acquired(self):
+        return sys.platform != "win32" or self._handle is not None
+
+    def release(self):
+        if self._handle is not None:
+            self._kernel32.CloseHandle(self._handle)
+            self._handle = None
+
+
+import ctypes
+import time
+from ctypes import wintypes
+
+
+def bring_existing_window_to_top(window_title):
+    """唤醒已有窗口到最前，并解决 UI 空白及任务栏闪烁问题"""
+    if sys.platform != "win32":
+        return
+
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    user32.FindWindowW.restype = ctypes.c_void_p
+    user32.IsIconic.argtypes = (ctypes.c_void_p,)
+    user32.IsIconic.restype = wintypes.BOOL
+    user32.GetClientRect.argtypes = (ctypes.c_void_p, ctypes.POINTER(wintypes.RECT))
+    user32.ShowWindowAsync.argtypes = (ctypes.c_void_p, ctypes.c_int)
+    user32.ShowWindowAsync.restype = wintypes.BOOL
+    user32.SetForegroundWindow.argtypes = (ctypes.c_void_p,)
+    user32.PostMessageW.argtypes = (
+        ctypes.c_void_p,
+        wintypes.UINT,
+        wintypes.WPARAM,
+        wintypes.LPARAM,
+    )
+    user32.PostMessageW.restype = wintypes.BOOL
+    user32.BringWindowToTop.argtypes = (ctypes.c_void_p,)
+
+    hwnd = user32.FindWindowW(None, window_title)
+    if not hwnd:
+        return
+    user32.GetForegroundWindow.restype = ctypes.c_void_p
+    fg_hwnd = user32.GetForegroundWindow()
+    user32.GetWindowThreadProcessId.argtypes = (
+        ctypes.c_void_p,
+        ctypes.POINTER(wintypes.DWORD),
+    )
+    user32.GetWindowThreadProcessId.restype = wintypes.DWORD
+
+    fg_tid = user32.GetWindowThreadProcessId(fg_hwnd, None)
+    current_tid = ctypes.windll.kernel32.GetCurrentThreadId()
+
+    attached = False
+    if fg_tid != current_tid:
+        user32.AttachThreadInput.argtypes = (
+            wintypes.DWORD,
+            wintypes.DWORD,
+            wintypes.BOOL,
+        )
+        user32.AttachThreadInput.restype = wintypes.BOOL
+        attached = bool(user32.AttachThreadInput(current_tid, fg_tid, True))
+
+    SW_RESTORE = 9
+    WM_SIZE = 0x0005
+    SIZE_RESTORED = 0
+
+    try:
+        if user32.IsIconic(hwnd):
+            user32.ShowWindowAsync(hwnd, SW_RESTORE)
+            time.sleep(0.1)
+
+        user32.BringWindowToTop(hwnd)
+        user32.SetForegroundWindow(hwnd)
+
+        rect = wintypes.RECT()
+        user32.GetClientRect(hwnd, ctypes.byref(rect))
+        width = rect.right - rect.left
+        height = rect.bottom - rect.top
+        if width > 0 and height > 0:
+            lparam = (height << 16) | (width & 0xFFFF)
+            user32.PostMessageW(hwnd, WM_SIZE, SIZE_RESTORED, lparam)
+
+    finally:
+        if attached:
+            user32.AttachThreadInput(current_tid, fg_tid, False)
 
 
 class PlayerApi:
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
     def __init__(self):
+        if getattr(self, "_initialized", False):
+            return
         self._music_root = None
+        self._initialized = True
 
     def _window(self):
         return webview.windows[0]

@@ -22,11 +22,11 @@ Wolffia 面向个人本地音乐库，重点是打开即用：选择音乐文件
 - 使用 Windows 风格的自然名称排序，支持数字序号和符号名称
 - 支持 `MP3`、`FLAC`、`WAV` 和 `M4A`
 - 在音频所在目录查找同名的 `.lrc` 或 `.vtt` 歌词文件
-- 解析 LRC 时间标签并高亮当前歌词
-- 提供播放/暂停、进度、音量、静音和播放速度控制
-- 播放结束后自动播放下一首
+- 解析 LRC 时间标签或 Cue 时间轴并高亮当前歌词
+- 提供三种播放方式
 - 使用本机 HTTP Range 服务读取音频，适合大文件播放
-- 可打包为无控制台窗口的单个 Windows `.exe`
+- 可打包单个 Windows `.exe`，免安装
+- 如果担心程序经常读写磁盘Temp消耗磁盘寿命，就使用onedir打包后的
 
 ## 技术栈
 
@@ -53,7 +53,7 @@ Wolffia 面向个人本地音乐库，重点是打开即用：选择音乐文件
 | 技术                                                                                                  | 用途                                                              |
 | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
 | ![PyInstaller](https://img.shields.io/badge/PyInstaller-Packaging-3D3D3D?logo=python&logoColor=white) | 将 Python 程序、前端静态文件和运行时依赖打包为 Windows 可执行文件 |
-| ![Nuitka](https://img.shields.io/badge/Nuitka-Compiler-4B8BBE?logo=python&logoColor=white)             | 将 Python 程序编译并打包为 Windows 可执行文件                     |
+| ![Nuitka](https://img.shields.io/badge/Nuitka-Compiler-4B8BBE?logo=python&logoColor=white)            | 将 Python 程序编译并打包为 Windows 可执行文件                     |
 
 ## 项目结构
 
@@ -92,7 +92,7 @@ wolffia/
 - [uv](https://docs.astral.sh/uv/)
 - [Node.js](https://nodejs.org/) 和 npm（仅在修改或重新构建前端时需要）
 - C/C++ 编译器（Nuitka需要将python转换成C/C++，然后编译）
-> 注：如果没有，首次打包会自行下载C/C++编译器
+  > 注：如果没有，首次打包会自行下载C/C++编译器
 
 ## 开发运行
 

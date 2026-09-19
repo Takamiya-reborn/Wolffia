@@ -1,6 +1,6 @@
 [project]
 name = "wolffia"
-version = "0.1.2"
+version = "0.1.3"
 description = "Windows 本地极简音乐播放器，支持本地音频播放与 LRC/WebVTT 同步歌词"
 readme = "README.md"
 authors = [
