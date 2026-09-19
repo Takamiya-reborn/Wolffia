@@ -178,8 +178,7 @@ class PlayerApi:
         song_path = self._song_path(relative_path)
         if not song_path or not song_path.is_file():
             return False
-
-        subprocess.Popen(["explorer.exe", f"/select,{os.fspath(song_path)}"])
+        subprocess.Popen(["explorer.exe", "/select,", os.fspath(song_path)])
         return True
 
     def show_properties(self, relative_path):
