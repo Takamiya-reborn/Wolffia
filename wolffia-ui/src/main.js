@@ -228,12 +228,16 @@ document.addEventListener("keydown", (event) => {
 lyricsContainer.ondblclick = async () => {
 	if (selectingFolder) return;
 	selectingFolder = true;
-	document.getElementById("current-title").innerText = "请选择音乐文件夹";
+	const title = document.getElementById("current-title");
+	const previousTitle = title.innerText;
+	title.innerText = "请选择音乐文件夹";
 	try {
 		const result = await window.pywebview.api.select_folder();
 		if (result) {
 			initData(result.songs, result.port);
-			document.getElementById("current-title").innerText = "请选择歌曲";
+			title.innerText = "请选择歌曲";
+		} else {
+			title.innerText = previousTitle;
 		}
 	} finally {
 		selectingFolder = false;
