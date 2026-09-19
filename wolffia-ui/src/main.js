@@ -1,9 +1,13 @@
 import "./style.css";
 import {
+	ChevronRight,
 	ChevronUp,
+	Folder,
 	ListMusic,
+	Music,
 	Pause,
 	Play,
+	List,
 	Repeat,
 	Shuffle,
 	Volume2,
@@ -11,43 +15,48 @@ import {
 	createIcons,
 } from "lucide";
 
-createIcons({
-	icons: {
-		ChevronUp,
-		ListMusic,
-		Pause,
-		Play,
-		Repeat,
-		Shuffle,
-		Volume2,
-		VolumeX,
-	},
-});
+const lucideIcons = {
+	ChevronRight,
+	ChevronUp,
+	Folder,
+	ListMusic,
+	Music,
+	Pause,
+	Play,
+	List,
+	Repeat,
+	Shuffle,
+	Volume2,
+	VolumeX,
+};
+
+createIcons({ icons: lucideIcons });
 
 let songs = [];
+let serverPort = 0;
+let lastVolume = 1;
 let currentIdx = -1;
 let currentLrc = [];
 let lyricElements = [];
 let activeLyricIndex = -1;
-let serverPort = 0;
 let selectingFolder = false;
-let lastVolume = 1;
 let loopMode = 'once'; // 'once' | 'loop' | 'random'
 
 const audio = document.getElementById("audio");
-const wrapper = document.getElementById("lyrics-wrapper");
-const lyricsContainer = document.getElementById("lyrics-container");
-const playToggle = document.getElementById("play-toggle");
-const progress = document.getElementById("progress");
-const currentTime = document.getElementById("current-time");
-const duration = document.getElementById("duration");
-const playbackRateToggle = document.getElementById("playback-rate-toggle");
-const playbackRateLabel = document.getElementById("playback-rate-label");
-const playbackRateMenu = document.getElementById("playback-rate-menu");
-const playbackRateOptions = [...document.querySelectorAll(".speed-option")];
-const muteToggle = document.getElementById("mute-toggle");
 const volume = document.getElementById("volume");
+const duration = document.getElementById("duration");
+const progress = document.getElementById("progress");
+const wrapper = document.getElementById("lyrics-wrapper");
+const playToggle = document.getElementById("play-toggle");
+const muteToggle = document.getElementById("mute-toggle");
+const currentTime = document.getElementById("current-time");
+const playlistCount = document.getElementById("playlist-count");
 const loopModeToggle = document.getElementById('loop-mode-toggle');
+const lyricsContainer = document.getElementById("lyrics-container");
+const playbackRateMenu = document.getElementById("playback-rate-menu");
+const playbackRateLabel = document.getElementById("playback-rate-label");
+const playbackRateToggle = document.getElementById("playback-rate-toggle");
+const playbackRateOptions = [...document.querySelectorAll(".speed-option")];
 
 function formatTime(seconds) {
 	if (!Number.isFinite(seconds)) return "00:00";
@@ -97,22 +106,36 @@ function initData(songsData, port) {
 		});
 		node.songs.push({ song, index });
 	});
-	renderTree(root, container, 0);
+	renderTree(root, container);
+	playlistCount.innerText = `${songs.length} 首`;
 }
 
-function renderTree(node, container, depth) {
+function renderTree(node, container) {
 	node.directories.forEach((directoryNode, name) => {
 		const directory = document.createElement("div");
 		const toggle = document.createElement("button");
+		const chevron = document.createElement("i");
+		const folderIcon = document.createElement("i");
+		const folderName = document.createElement("span");
 		const children = document.createElement("div");
 		const childrenInner = document.createElement("div");
 
 		directory.className = "directory-node";
-		toggle.className = "directory-toggle relative w-full cursor-pointer overflow-hidden border-0 border-b border-[var(--line)] bg-transparent py-3 pr-3 text-left text-[13px] leading-[1.4] whitespace-nowrap text-[#8f958d] text-ellipsis hover:bg-[var(--panel-raised)] hover:text-[#f0f2ec]";
+		toggle.className = "directory-toggle flex w-full cursor-pointer items-center gap-1.5 border-0 border-b border-[var(--line)] bg-transparent py-3 pr-3 pl-3 text-left text-[13px] leading-[1.4] text-[#8f958d] hover:bg-[var(--panel-raised)] hover:text-[#f0f2ec]";
 		toggle.type = "button";
-		toggle.innerText = name;
-		toggle.style.paddingLeft = `${28 + depth * 16}px`;
-		toggle.style.setProperty("--arrow-offset", `${12 + depth * 16}px`);
+
+		chevron.className = "directory-chevron block h-[13px] w-[13px] shrink-0 transition-transform duration-150";
+		chevron.dataset.lucide = "chevron-right";
+		chevron.setAttribute("aria-hidden", "true");
+
+		folderIcon.className = "block h-3.5 w-3.5 shrink-0";
+		folderIcon.dataset.lucide = "folder";
+		folderIcon.setAttribute("aria-hidden", "true");
+
+		folderName.className = "min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap";
+		folderName.innerText = name;
+
+		toggle.append(chevron, folderIcon, folderName);
 
 		children.className = "collapsible-wrapper";
 		childrenInner.className = "collapsible-inner";
@@ -120,7 +143,7 @@ function renderTree(node, container, depth) {
 		let rendered = false;
 		toggle.onclick = () => {
 			if (!rendered) {
-				renderTree(directoryNode, childrenInner, depth + 1);
+				renderTree(directoryNode, childrenInner);
 				rendered = true;
 			}
 			const isExpanded = children.classList.toggle("expanded");
@@ -132,16 +155,30 @@ function renderTree(node, container, depth) {
 		container.appendChild(directory);
 	});
 
+	// pl-[31px] = pl-3(12px) + chevron(13px) + gap(6px)，让 music 图标与 folder 图标列对齐；
+	// 若调整图标尺寸或间距，需同步修改此值
 	node.songs.forEach(({ song, index }) => {
 		const item = document.createElement("div");
-		item.className = "song-item w-full cursor-pointer overflow-hidden border-b border-[var(--line)] py-3 pr-3 text-left text-[13px] leading-[1.4] whitespace-nowrap text-[var(--muted)] text-ellipsis hover:bg-[var(--panel-raised)] hover:text-[#f0f2ec]";
+		const songIcon = document.createElement("i");
+		const songName = document.createElement("span");
+
+		item.className = "song-item flex w-full cursor-pointer items-center gap-1.5 border-b border-[var(--line)] py-3 pr-3 pl-[31px] text-left text-[13px] leading-[1.4] text-[var(--muted)] hover:bg-[var(--panel-raised)] hover:text-[#f0f2ec]";
 		item.id = "item-" + index;
-		item.style.paddingLeft = `${28 + depth * 16}px`;
-		item.innerText = song.name;
+
+		songIcon.className = "block h-3.5 w-3.5 shrink-0";
+		songIcon.dataset.lucide = "music";
+		songIcon.setAttribute("aria-hidden", "true");
+
+		songName.className = "min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap";
+		songName.innerText = song.name;
+
+		item.append(songIcon, songName);
 		item.title = song.path;
 		item.onclick = () => playSong(index);
 		container.appendChild(item);
 	});
+
+	createIcons({ icons: lucideIcons });
 }
 
 lyricsContainer.ondblclick = async () => {

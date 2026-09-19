@@ -73,21 +73,8 @@ body {
 	background-color: rgba(255, 255, 255, 0.3) !important;
 }
 
-.directory-toggle::before {
-	position: absolute;
-	left: var(--arrow-offset, 12px);
-	top: 50%;
-	width: 6px;
-	height: 6px;
-	border-right: 1px solid currentColor;
-	border-bottom: 1px solid currentColor;
-	content: "";
-	transform: translateY(-65%) rotate(-45deg);
-	transition: transform 150ms ease;
-}
-
-.directory-toggle.expanded::before {
-	transform: translateY(-65%) rotate(45deg);
+.directory-toggle.expanded .directory-chevron {
+	transform: rotate(90deg);
 }
 
 .collapsible-wrapper {
@@ -100,9 +87,12 @@ body {
 	grid-template-rows: 1fr;
 }
 
+/* 每层嵌套统一缩进 + 左侧引导线，替代逐项 padding-left */
 .collapsible-inner {
 	overflow: hidden;
 	min-height: 0;
+	margin-left: 16px;
+	border-left: 1px solid var(--line);
 }
 
 .song-item.active {
@@ -110,12 +100,6 @@ body {
 	box-shadow: inset 2px 0 0 var(--accent);
 	color: var(--accent) !important;
 	font-weight: 600 !important;
-}
-
-.play-toggle svg {
-	display: block;
-	width: 18px;
-	height: 18px;
 }
 
 .play-toggle .icon-pause {
@@ -144,17 +128,6 @@ body {
 	outline-offset: 2px;
 }
 
-.speed-chevron {
-	display: block;
-	width: 13px;
-	height: 13px;
-	transition: transform 150ms ease;
-}
-
-.speed-toggle[aria-expanded="true"] .speed-chevron {
-	transform: rotate(180deg);
-}
-
 .speed-option {
 	padding: 7px 9px;
 	border: 0;
@@ -173,10 +146,8 @@ body {
 	color: var(--accent);
 }
 
-.icon-button svg {
-	display: block;
-	width: 16px;
-	height: 16px;
+.speed-toggle[aria-expanded="true"] .speed-chevron {
+	transform: rotate(180deg);
 }
 
 .icon-button .icon-muted {
@@ -189,12 +160,6 @@ body {
 
 .icon-button.is-muted .icon-muted {
 	display: block;
-}
-
-.loop-mode-toggle svg {
-	display: block;
-	width: 16px;
-	height: 16px;
 }
 
 .loop-mode-toggle .icon-loop,

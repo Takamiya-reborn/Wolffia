@@ -4,8 +4,8 @@ import webview
 from pathlib import Path
 from wolffia.core.api import PlayerApi
 
-MIN_WINDOW_WIDTH = 700
-MIN_WINDOW_HEIGHT = 500
+MIN_WINDOW_WIDTH = 640
+MIN_WINDOW_HEIGHT = 480
 
 
 def get_asset_path(filename):
@@ -37,8 +37,8 @@ class PlayerWindow:
         window = webview.create_window(
             "Wolffia",
             url=self.html_url,
-            width=900,
-            height=650,
+            width=1280,
+            height=720,
             background_color="#121212",
             js_api=api,
             min_size=(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT),

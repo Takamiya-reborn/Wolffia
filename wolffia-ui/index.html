@@ -12,10 +12,26 @@
     >
       <aside
         id="list"
-        class="flex min-w-0 flex-[0_0_280px] flex-col overflow-hidden border-r border-(--line) bg-[rgba(21,23,21,0.84)] px-0 pb-5 pt-7 max-[760px]:basis-55"
+        class="flex min-w-0 flex-[0_0_280px] flex-col overflow-hidden border-r border-(--line) bg-[rgba(21,23,21,0.84)] px-0 pb-5 pt-4 max-[760px]:basis-55"
       >
-        <header class="mb-6 px-6 max-[760px]:px-4.5">
-          <h1 class="m-0 text-xl font-semibold tracking-[-0.02em]">播放列表</h1>
+        <header
+          class="flex shrink-0 items-center gap-1.5 border-b border-(--line) py-3 pr-3 pl-7.75"
+        >
+          <i
+            data-lucide="list"
+            class="block h-4.5 w-4.5 text-(--accent)"
+            aria-hidden="true"
+          ></i>
+          <h1
+            class="m-0 min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-[16px] font-semibold leading-[1.4] tracking-[-0.01em] text-(--text-strong)"
+          >
+            播放列表
+          </h1>
+          <span
+            id="playlist-count"
+            class="shrink-0 rounded-full bg-[rgba(215,221,214,0.07)] px-2 py-0.75 text-[13px] font-medium leading-none tracking-[0.04em] text-(--faint) tabular-nums"
+            >0 首</span
+          >
         </header>
         <div id="songs" class="min-h-0 flex-1 overflow-y-auto pb-3"></div>
       </aside>
@@ -51,12 +67,20 @@
             aria-label="播放"
             title="播放"
           >
-            <i data-lucide="play" class="icon-play" aria-hidden="true"></i>
-            <i data-lucide="pause" class="icon-pause" aria-hidden="true"></i>
+            <i
+              data-lucide="play"
+              class="icon-play block h-4.5 w-4.5"
+              aria-hidden="true"
+            ></i>
+            <i
+              data-lucide="pause"
+              class="icon-pause block h-4.5 w-4.5"
+              aria-hidden="true"
+            ></i>
           </button>
           <button
             id="loop-mode-toggle"
-            class="loop-mode-toggle grid h-8 w-8 shrink-0 place-items-center rounded-lg border-0 bg-transparent p-0 text-(--muted) transition-[color,background] duration-150 hover:bg-[rgba(215,221,214,0.08)] hover:text-(--text-strong)"
+            class="loop-mode-toggle grid h-8 w-8 shrink-0 place-items-center rounded-lg border-0 bg-transparent p-0 text-(--muted) transition-[color,background] duration-150 hover:bg-[rgba(215,221,214,0.08)] hover:text-(--text-strong) [&_svg]:block [&_svg]:h-4 [&_svg]:w-4"
             type="button"
             aria-label="循环模式"
             title="循环模式"
@@ -102,7 +126,7 @@
               <span id="playback-rate-label">1x</span>
               <i
                 data-lucide="chevron-up"
-                class="speed-chevron"
+                class="speed-chevron block h-3.25 w-3.25 transition-transform duration-150"
                 aria-hidden="true"
               ></i>
             </button>
@@ -170,7 +194,7 @@
           </div>
           <button
             id="mute-toggle"
-            class="icon-button grid h-8 w-8 shrink-0 place-items-center rounded-lg border-0 bg-transparent p-0 text-(--muted) transition-[color,background] duration-150 hover:bg-[rgba(215,221,214,0.08)] hover:text-(--text-strong)"
+            class="icon-button grid h-8 w-8 shrink-0 place-items-center rounded-lg border-0 bg-transparent p-0 text-(--muted) transition-[color,background] duration-150 hover:bg-[rgba(215,221,214,0.08)] hover:text-(--text-strong) [&_svg]:block [&_svg]:h-4 [&_svg]:w-4"
             type="button"
             aria-label="静音"
             title="静音"
