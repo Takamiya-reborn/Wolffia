@@ -7,7 +7,6 @@ from pathlib import Path
 from wolffia.core.ParseLRC import parse_lrc
 from wolffia.core.ParseVTT import parse_vtt
 
-
 if os.name == "nt":
     _str_cmp_logical = ctypes.WinDLL("Shlwapi.dll").StrCmpLogicalW
     _str_cmp_logical.argtypes = (ctypes.c_wchar_p, ctypes.c_wchar_p)
@@ -32,8 +31,12 @@ def _compare_names(left, right):
 
 
 def _compare_paths(left, right):
-    left_parts = left.relative_to(left.anchor).parts if left.is_absolute() else left.parts
-    right_parts = right.relative_to(right.anchor).parts if right.is_absolute() else right.parts
+    left_parts = (
+        left.relative_to(left.anchor).parts if left.is_absolute() else left.parts
+    )
+    right_parts = (
+        right.relative_to(right.anchor).parts if right.is_absolute() else right.parts
+    )
     for left_part, right_part in zip(left_parts, right_parts):
         comparison = _compare_names(left_part, right_part)
         if comparison:
@@ -50,6 +53,7 @@ def _read_lyrics(path):
 
 def _find_lyrics(audio_path):
     base = audio_path.with_suffix("")
+    # 优先匹配 audio.ext.vtt，再匹配同名 LRC/WebVTT
     candidates = [
         Path(f"{audio_path}.vtt"),
         Path(f"{base}.lrc"),
@@ -67,7 +71,11 @@ def scan_folder(folder_path):
     extensions = (".mp3", ".flac", ".wav", ".m4a")
     root = Path(folder_path)
     audio_files = sorted(
-        (path for path in root.rglob("*") if path.is_file() and path.suffix.lower() in extensions),
+        (
+            path
+            for path in root.rglob("*")
+            if path.is_file() and path.suffix.lower() in extensions
+        ),
         key=cmp_to_key(_compare_paths),
     )
     for audio_path in audio_files:

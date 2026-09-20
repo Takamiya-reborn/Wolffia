@@ -2,6 +2,7 @@ import os
 import sys
 import base64
 import ctypes
+import time
 import webview
 import subprocess
 from pathlib import Path
@@ -43,12 +44,6 @@ class ApplicationMutex:
         if self._handle is not None:
             self._kernel32.CloseHandle(self._handle)
             self._handle = None
-
-
-import ctypes
-import time
-from ctypes import wintypes
-
 
 def bring_existing_window_to_top(window_title):
     """唤醒已有窗口到最前，并解决 UI 空白及任务栏闪烁问题"""
@@ -121,7 +116,7 @@ def bring_existing_window_to_top(window_title):
             user32.AttachThreadInput(current_tid, fg_tid, False)
 
 
-# 仅尝试从这些格式提取内嵌专辑图（wav 兼容性差且几乎不携带封面，跳过）
+# 仅处理常见内嵌封面格式
 _ALBUM_ART_SUFFIXES = {".mp3", ".flac", ".m4a"}
 
 
@@ -178,6 +173,7 @@ class PlayerApi:
 
         root = Path(self._music_root).resolve()
         song_path = (root / relative_path).resolve()
+        # 防止相对路径越界
         try:
             song_path.relative_to(root)
         except ValueError:
@@ -199,6 +195,7 @@ class PlayerApi:
 
         self._music_root = Path(folder).resolve()
         songs = scan_folder(folder)
+        # 为音频 Range 请求分配临时端口
         with socket.socket() as s:
             s.bind(("127.0.0.1", 0))
             port = s.getsockname()[1]

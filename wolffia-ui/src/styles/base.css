@@ -1,0 +1,47 @@
+:root {
+	font-family: "Avenir Next", "Segoe UI", sans-serif;
+	color: #edf0ea;
+	background: #121712;
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	--canvas: #121712;
+	--panel: #171d18;
+	--panel-raised: #1d241e;
+	--line: rgba(215, 221, 214, 0.08);
+	--muted: #9aa39b;
+	--faint: #707a72;
+	--accent: #a9c9a0;
+	--accent-soft: rgba(169, 201, 160, 0.14);
+	--text-strong: #f3f6f1;
+	--text-soft: #dfe7de;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html {
+	height: 100%;
+	overflow: hidden;
+	background: var(--canvas);
+}
+
+body {
+	position: relative;
+	margin: 0;
+	min-width: 640px;
+	height: 100vh;
+	overflow: hidden;
+	background: var(--canvas);
+	color: #e8e9e7;
+}
+
+[hidden] {
+	display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	* {
+		scroll-behavior: auto !important;
+	}
+}

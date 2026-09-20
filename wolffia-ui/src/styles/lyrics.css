@@ -1,0 +1,36 @@
+/* 歌词背景与当前行 */
+#lyrics-bg {
+	position: absolute;
+	inset: -10%;
+	background-position: center;
+	background-size: cover;
+	opacity: 0;
+	transition: opacity 0.6s ease-out;
+	pointer-events: none;
+	filter: blur(60px) brightness(0.45) saturate(1.2);
+	mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+	-webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+}
+
+#lyrics-bg::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background-image: inherit;
+	background-position: center;
+	background-size: cover;
+	filter: blur(140px) brightness(0.35);
+	mask-image: radial-gradient(ellipse at center, transparent 0%, black 50%, transparent 90%);
+	-webkit-mask-image: radial-gradient(ellipse at center, transparent 0%, black 50%, transparent 90%);
+}
+
+#lyrics-bg.is-visible {
+	opacity: 1;
+}
+
+.lrc-active {
+	color: var(--text-strong) !important;
+	font-size: clamp(22px, 2.5vw, 30px) !important;
+	font-weight: 600 !important;
+	text-shadow: 0 0 12px rgba(169, 201, 160, 0.18);
+}

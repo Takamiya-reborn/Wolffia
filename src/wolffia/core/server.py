@@ -13,8 +13,9 @@ class RangeHandler(BaseHTTPRequestHandler):
         raw_path = self.path.strip("/").split("?")[0]
         path = urllib.parse.unquote(raw_path)
 
-        root = os.path.realpath(os.getcwd())
+        root = self.server.document_root
         full_path = os.path.realpath(os.path.join(root, path))
+        # 限制访问范围
         if os.path.commonpath((root, full_path)) != root:
             self.send_error(404)
             return
@@ -42,6 +43,7 @@ class RangeHandler(BaseHTTPRequestHandler):
 
         chunk_size = (end - start) + 1
         partial = range_header is not None
+        # 音频拖动依赖标准 Range 响应
         self.send_response(206 if partial else 200)
 
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -69,7 +71,7 @@ class RangeHandler(BaseHTTPRequestHandler):
 
 
 def start_static_server(folder, port):
-    os.chdir(folder)
     server = ThreadingHTTPServer(("127.0.0.1", port), RangeHandler)
+    server.document_root = os.path.realpath(folder)
     server.daemon_threads = True
     server.serve_forever()

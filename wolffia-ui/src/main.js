@@ -1,83 +1,83 @@
 import "./style.css";
-import {
-	Play,
-	List,
-	Music,
-	Pause,
-	Folder,
-	Repeat,
-	Shuffle,
-	Volume2,
-	VolumeX,
-	ListMusic,
-	ChevronUp,
-	ChevronRight,
-	createIcons,
-} from "lucide";
-
-const lucideIcons = {
-	Play,
-	List,
-	Music,
-	Pause,
-	Folder,
-	Repeat,
-	Shuffle,
-	Volume2,
-	VolumeX,
-	ListMusic,
-	ChevronUp,
-	ChevronRight,
-};
-
-createIcons({ icons: lucideIcons });
+import { dom } from "./js/dom.js";
+import { refreshIcons } from "./js/icons.js";
+import { formatTime } from "./js/utils.js";
+import { createLyricsController } from "./js/lyrics.js";
 
 let songs = [];
 let serverPort = 0;
 let lastVolume = 1;
 let currentIdx = -1;
-let currentLrc = [];
-let lyricElements = [];
-let activeLyricIndex = -1;
 let selectingFolder = false;
 let contextMenuSongPath = null;
-let loopMode = 'once'; // 'once' | 'loop' | 'random'
+let loopMode = "once";
 
-const audio = document.getElementById("audio");
-const volume = document.getElementById("volume");
-const volumeValue = document.getElementById("volume-value");
-const duration = document.getElementById("duration");
-const progress = document.getElementById("progress");
-const lyricsBg = document.getElementById("lyrics-bg");
-const wrapper = document.getElementById("lyrics-wrapper");
-const playToggle = document.getElementById("play-toggle");
-const muteToggle = document.getElementById("mute-toggle");
-const currentTime = document.getElementById("current-time");
+const { audio, volume, volumeValue, duration, progress, lyricsBg, lyricsWrapper: wrapper,
+	lyricsContainer, playToggle, muteToggle, currentTime, playlist, playlistCount,
+	loopModeToggle, songContextMenu, playbackRateMenu, playbackRateLabel,
+	playbackRateToggle, playbackRateOptions, playerHeader, currentTitle, titleText } = dom;
+const lyrics = createLyricsController({ wrapper, container: lyricsContainer });
 const ALBUM_ART_EXTENSIONS = new Set(["mp3", "flac", "m4a"]);
-const playlistCount = document.getElementById("playlist-count");
-const loopModeToggle = document.getElementById('loop-mode-toggle');
-const lyricsContainer = document.getElementById("lyrics-container");
-const songContextMenu = document.getElementById("song-context-menu");
-const playbackRateMenu = document.getElementById("playback-rate-menu");
-const playbackRateLabel = document.getElementById("playback-rate-label");
-const playbackRateToggle = document.getElementById("playback-rate-toggle");
-const playbackRateOptions = [...document.querySelectorAll(".speed-option")];
 
-function formatTime(seconds) {
-	if (!Number.isFinite(seconds)) return "00:00";
-	const minutes = Math.floor(seconds / 60);
-	const remainingSeconds = Math.floor(seconds % 60);
-	return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+// 与 style.css 中 --title-fade 保持一致，确保滚动终点刚好露出完整歌名
+const TITLE_FADE_WIDTH = 28;
+
+function setTitle(text) {
+	titleText.innerText = text;
+	updateTitleMarquee();
 }
+
+// 测量歌名是否溢出标题栏；溢出时标记为可滚动（悬停触发），
+// 振幅 = 溢出量 + 渐隐遮罩宽度，让歌名结尾滚出渐隐区、完整露出后再折返
+function updateTitleMarquee() {
+	const overflow = titleText.scrollWidth - currentTitle.clientWidth;
+	if (overflow > 2) {
+		currentTitle.classList.add("is-overflowing");
+		currentTitle.style.setProperty(
+			"--marquee-amplitude",
+			`${overflow + TITLE_FADE_WIDTH}px`,
+		);
+		// 滚动全程约 4 倍振幅，按此换算时长，下限 6s 避免短溢出时闪动
+		currentTitle.style.setProperty(
+			"--marquee-duration",
+			`${Math.max(6, overflow / 20)}s`,
+		);
+	} else {
+		currentTitle.classList.remove("is-overflowing");
+	}
+}
+
+// 拖动进度条期间以滑块位置为准，防止 timeupdate 回写进度与拖动互相打架（抖动）
+let progressDragging = false;
+
+progress.addEventListener("pointerdown", () => {
+	progressDragging = true;
+});
+window.addEventListener("pointerup", () => {
+	progressDragging = false;
+});
+window.addEventListener("pointercancel", () => {
+	progressDragging = false;
+});
 
 function updatePlayerState() {
 	const hasDuration = Number.isFinite(audio.duration) && audio.duration > 0;
-	const percentage = hasDuration ? (audio.currentTime / audio.duration) * 100 : 0;
-	progress.value = percentage;
-	progress.style.setProperty("--progress", `${percentage}%`);
-	currentTime.innerText = formatTime(audio.currentTime);
+	if (progressDragging) {
+		// 拖动中：进度、时间跟随滑块，不回写 audio 的滞后状态
+		const sliderValue = Number(progress.value);
+		progress.style.setProperty("--progress", `${sliderValue}%`);
+		currentTime.innerText = formatTime(
+			hasDuration ? (sliderValue / 100) * audio.duration : 0,
+		);
+	} else {
+		const percentage = hasDuration ? (audio.currentTime / audio.duration) * 100 : 0;
+		progress.value = percentage;
+		progress.style.setProperty("--progress", `${percentage}%`);
+		currentTime.innerText = formatTime(audio.currentTime);
+	}
 	duration.innerText = formatTime(audio.duration);
 	const isPlaying = !audio.paused;
+	playerHeader.classList.toggle("is-playing", isPlaying);
 	playToggle.classList.toggle("is-playing", isPlaying);
 	playToggle.setAttribute("aria-label", isPlaying ? "暂停" : "播放");
 	playToggle.title = isPlaying ? "暂停 (空格)" : "播放 (空格)";
@@ -189,7 +189,7 @@ function renderTree(node, container) {
 		container.appendChild(item);
 	});
 
-	createIcons({ icons: lucideIcons });
+	refreshIcons();
 }
 
 function closeSongContextMenu() {
@@ -232,16 +232,16 @@ document.addEventListener("keydown", (event) => {
 lyricsContainer.ondblclick = async () => {
 	if (selectingFolder) return;
 	selectingFolder = true;
-	const title = document.getElementById("current-title");
-	const previousTitle = title.innerText;
-	title.innerText = "请选择音乐文件夹";
+	const previousTitle = titleText.innerText;
+	setTitle("请选择音乐文件夹");
 	try {
 		const result = await window.pywebview.api.select_folder();
 		if (result) {
 			initData(result.songs, result.port);
-			title.innerText = "请选择歌曲";
+			setTitle("请选择歌曲");
+			playerHeader.classList.remove("has-song");
 		} else {
-			title.innerText = previousTitle;
+			setTitle(previousTitle);
 		}
 	} finally {
 		selectingFolder = false;
@@ -255,16 +255,15 @@ async function playSong(idx) {
 		.querySelectorAll(".song-item")
 		.forEach((item) => item.classList.remove("active"));
 	document.getElementById("item-" + idx).classList.add("active");
-	document.getElementById("current-title").innerText = songs[idx].name;
+	setTitle(songs[idx].name);
+	playerHeader.classList.add("has-song");
 
 	audio.src = `http://127.0.0.1:${serverPort}/${encodeURIComponent(songs[idx].path)}`;
-	audio.play();
+	audio.play().catch(() => {
+		// 快速切歌时上一个 play() 可能被新的加载中断（AbortError），忽略即可
+	});
 
-	currentLrc = [];
-	lyricElements = [];
-	activeLyricIndex = -1;
-	wrapper.innerHTML = "";
-	parseLyrics(songs[idx].lyrics || []);
+	lyrics.render(songs[idx].lyrics || []);
 	loadAlbumArt(idx);
 }
 
@@ -284,48 +283,6 @@ async function loadAlbumArt(idx) {
 	if (idx !== currentIdx || !art) return;
 	lyricsBg.style.backgroundImage = `url("${art}")`;
 	lyricsBg.classList.add("is-visible");
-}
-
-function parseLyrics(lyrics) {
-	currentLrc = lyrics;
-	lyricElements = [];
-	lyrics.forEach(({ text: lyricText }) => {
-		const p = document.createElement("div");
-		p.className = "lrc-line px-0 py-[9px] text-[clamp(17px,2vw,21px)] leading-[1.45] text-[#68726c] transition-[color,font-size,opacity] duration-300 ease-in-out";
-		p.innerText = lyricText;
-		wrapper.appendChild(p);
-		lyricElements.push(p)
-	});
-	requestAnimationFrame(() => centerLyric(0));
-}
-
-function centerLyric(index) {
-	const line = lyricElements[index];
-	if (!line) return;
-	const wrapperRect = wrapper.getBoundingClientRect();
-	const lineRect = line.getBoundingClientRect();
-	const lineOffset = lineRect.top - wrapperRect.top;
-	const top =
-		lyricsContainer.clientHeight / 2 - lineOffset - lineRect.height / 2;
-	wrapper.style.top = `${top}px`;
-}
-
-function updateLyrics() {
-	const now = audio.currentTime;
-	let nextLyricIndex = activeLyricIndex;
-	for (let i = currentLrc.length - 1; i >= 0; i--) {
-		if (now >= currentLrc[i].time && currentLrc[i].text.trim()) {
-			nextLyricIndex = i;
-			break;
-		}
-	}
-	if (nextLyricIndex >= 0 && nextLyricIndex !== activeLyricIndex) {
-		activeLyricIndex = nextLyricIndex;
-		lyricElements.forEach((line, idx) => {
-			line.classList.toggle("lrc-active", idx === activeLyricIndex);
-		});
-		requestAnimationFrame(() => centerLyric(activeLyricIndex));
-	}
 }
 
 function playNext() {
@@ -416,16 +373,17 @@ loopModeToggle.onclick = () => {
 };
 
 updateLoopModeUI();
+refreshIcons();
 
 audio.ontimeupdate = () => {
 	updatePlayerState();
-	updateLyrics();
+	lyrics.update(audio.currentTime);
 };
 
 function togglePlay() {
 	if (!audio.src) return;
 	if (audio.paused) {
-		audio.play();
+		audio.play().catch(() => { });
 	} else {
 		audio.pause();
 	}
@@ -447,9 +405,18 @@ playToggle.onclick = togglePlay;
 
 progress.oninput = () => {
 	if (!Number.isFinite(audio.duration)) return;
+	// 拖动过程中只预览时间与歌词，不提交 seek，
+	// 避免高频 seek 造成的抖动、连跳与卡死
+	const seekTime = (Number(progress.value) / 100) * audio.duration;
+	progress.style.setProperty("--progress", `${Number(progress.value)}%`);
+	currentTime.innerText = formatTime(seekTime);
+	lyrics.update(seekTime);
+};
+
+// 松手时才提交一次真正的 seek
+progress.onchange = () => {
+	if (!Number.isFinite(audio.duration)) return;
 	audio.currentTime = (Number(progress.value) / 100) * audio.duration;
-	updatePlayerState();
-	updateLyrics();
 };
 
 function setPlaybackRate(rate) {
@@ -559,7 +526,7 @@ function seekBy(seconds) {
 		audio.duration,
 	);
 	updatePlayerState();
-	updateLyrics();
+	lyrics.update(audio.currentTime);
 }
 
 function changeVolumeBy(delta) {
@@ -616,18 +583,20 @@ audio.onplay = updatePlayerState;
 audio.onpause = updatePlayerState;
 
 window.addEventListener("resize", () => {
+	updateTitleMarquee();
 	if (currentIdx >= 0) {
 		const activeLine = wrapper.querySelector(".lrc-active");
 		if (activeLine) {
-			requestAnimationFrame(() =>
-				centerLyric([...wrapper.children].indexOf(activeLine)),
-			);
+			lyrics.recenterActive();
 		}
 	}
 });
 
 audio.onended = () => {
 	updatePlayerState();
+	// 拖动期间 seek 到结尾触发的 ended 不是自然播完，不切歌，
+	// 否则会一边拖一边连续跳歌
+	if (progressDragging) return;
 	playNext();
 };
 

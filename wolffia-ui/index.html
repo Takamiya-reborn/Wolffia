@@ -53,13 +53,17 @@
         class="flex min-w-0 flex-1 flex-col items-center px-10 pt-10.5 max-[760px]:px-5.5 max-[760px]:pt-8"
       >
         <header
-          class="-mx-10 w-[calc(100%+80px)] shrink-0 self-stretch border-b border-(--line) px-10 pb-4 text-center max-[760px]:-mx-5.5 max-[760px]:w-[calc(100%+44px)] max-[760px]:px-5.5"
+          id="player-header"
+          class="-mx-10 flex w-[calc(100%+80px)] shrink-0 self-stretch items-center justify-center gap-2.5 border-b border-(--line) px-10 pb-4 max-[760px]:-mx-5.5 max-[760px]:w-[calc(100%+44px)] max-[760px]:px-5.5"
         >
+          <div class="eq-icon" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
           <h2
             id="current-title"
-            class="m-0 w-full max-w-none overflow-hidden text-ellipsis whitespace-nowrap text-[clamp(17px,2vw,22px)] font-semibold tracking-[-0.02em] text-[#c9ccc6]"
+            class="m-0 min-w-0 flex-1 overflow-hidden text-[clamp(17px,2vw,22px)] font-semibold tracking-[-0.02em] text-[#c9ccc6]"
           >
-            双击选择文件夹
+            <span id="title-text" class="title-text">双击选择文件夹</span>
           </h2>
         </header>
         <div

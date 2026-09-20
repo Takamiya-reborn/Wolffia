@@ -1,0 +1,149 @@
+/* 标题跑马灯与播放状态 */
+#player-header {
+	position: relative;
+}
+
+#current-title {
+	display: flex;
+	justify-content: center;
+	min-width: 0;
+	overflow: hidden;
+	-webkit-user-select: text;
+	user-select: text;
+	cursor: text;
+	--title-fade: 28px;
+	-webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--title-fade), #000 calc(100% - var(--title-fade)), transparent 100%);
+	mask-image: linear-gradient(to right, transparent 0, #000 var(--title-fade), #000 calc(100% - var(--title-fade)), transparent 100%);
+}
+
+#current-title .title-text {
+	flex: none;
+	white-space: nowrap;
+}
+
+#current-title.is-overflowing {
+	justify-content: flex-start;
+}
+
+#current-title.is-overflowing .title-text {
+	transition: transform 0.45s ease;
+}
+
+#current-title.is-overflowing:hover .title-text {
+	animation: title-marquee var(--marquee-duration, 12s) ease-in-out infinite;
+}
+
+@keyframes title-marquee {
+
+	0%,
+	8% {
+		transform: translateX(0);
+	}
+
+	46%,
+	54% {
+		transform: translateX(calc(var(--marquee-amplitude, 100px) * -1));
+	}
+
+	92%,
+	100% {
+		transform: translateX(0);
+	}
+}
+
+.eq-icon {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: 2.5px;
+	height: 15px;
+	opacity: 0;
+	transition: opacity 0.4s ease;
+}
+
+#player-header.has-song .eq-icon {
+	opacity: 1;
+}
+
+.eq-icon span {
+	width: 3px;
+	height: 15px;
+	border-radius: 999px;
+	background: var(--accent);
+	transform: scaleY(0.22);
+	opacity: 0.5;
+	transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+#player-header.is-playing .eq-icon span {
+	opacity: 0.95;
+	animation: eq-bounce 0.9s ease-in-out infinite;
+}
+
+#player-header.is-playing .eq-icon span:nth-child(1) {
+	animation-duration: 0.82s;
+	animation-delay: -0.12s;
+}
+
+#player-header.is-playing .eq-icon span:nth-child(2) {
+	animation-duration: 1.05s;
+	animation-delay: -0.45s;
+}
+
+#player-header.is-playing .eq-icon span:nth-child(3) {
+	animation-duration: 0.9s;
+	animation-delay: -0.22s;
+}
+
+@keyframes eq-bounce {
+
+	0%,
+	100% {
+		transform: scaleY(0.25);
+	}
+
+	50% {
+		transform: scaleY(1);
+	}
+}
+
+#player-header::after {
+	content: "";
+	position: absolute;
+	left: 10%;
+	right: 10%;
+	bottom: -7px;
+	height: 12px;
+	border-radius: 999px;
+	pointer-events: none;
+	background: linear-gradient(to right, transparent, rgba(169, 201, 160, 0.32) 16%, rgba(169, 201, 160, 0.32) 84%, transparent);
+	filter: blur(10px);
+	opacity: 0;
+	transition: opacity 0.5s ease;
+}
+
+#player-header.is-playing::after {
+	opacity: 1;
+	animation: glow-breathe 3.4s ease-in-out infinite;
+}
+
+@keyframes glow-breathe {
+
+	0%,
+	100% {
+		opacity: 0.35;
+	}
+
+	50% {
+		opacity: 1;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	#current-title.is-overflowing .title-text,
+	#player-header.is-playing .eq-icon span,
+	#player-header.is-playing::after {
+		animation: none;
+	}
+}
