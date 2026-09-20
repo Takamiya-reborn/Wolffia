@@ -48,10 +48,12 @@ const volume = document.getElementById("volume");
 const volumeValue = document.getElementById("volume-value");
 const duration = document.getElementById("duration");
 const progress = document.getElementById("progress");
+const lyricsBg = document.getElementById("lyrics-bg");
 const wrapper = document.getElementById("lyrics-wrapper");
 const playToggle = document.getElementById("play-toggle");
 const muteToggle = document.getElementById("mute-toggle");
 const currentTime = document.getElementById("current-time");
+const ALBUM_ART_EXTENSIONS = new Set(["mp3", "flac", "m4a"]);
 const playlistCount = document.getElementById("playlist-count");
 const loopModeToggle = document.getElementById('loop-mode-toggle');
 const lyricsContainer = document.getElementById("lyrics-container");
@@ -263,6 +265,25 @@ async function playSong(idx) {
 	activeLyricIndex = -1;
 	wrapper.innerHTML = "";
 	parseLyrics(songs[idx].lyrics || []);
+	loadAlbumArt(idx);
+}
+
+async function loadAlbumArt(idx) {
+	lyricsBg.classList.remove("is-visible");
+	lyricsBg.style.backgroundImage = "";
+	const songPath = songs[idx].path;
+	const ext = songPath.substring(songPath.lastIndexOf(".") + 1).toLowerCase();
+	if (!ALBUM_ART_EXTENSIONS.has(ext)) return;
+	let art = null;
+	try {
+		art = await window.pywebview.api.get_album_art(songPath);
+	} catch {
+		return;
+	}
+	// 请求期间用户可能已切歌，忽略过期结果
+	if (idx !== currentIdx || !art) return;
+	lyricsBg.style.backgroundImage = `url("${art}")`;
+	lyricsBg.classList.add("is-visible");
 }
 
 function parseLyrics(lyrics) {

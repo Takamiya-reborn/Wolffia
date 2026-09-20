@@ -21,6 +21,7 @@ Wolffia 面向个人本地音乐库，重点是打开即用：选择音乐文件
 - 子目录默认折叠，展开时懒加载其中的音频文件
 - 使用 Windows 风格的自然名称排序，支持数字序号和符号名称
 - 支持 `MP3`、`FLAC`、`WAV` 和 `M4A`
+- 从 `MP3`、`FLAC`、`M4A` 提取内嵌专辑图，作为歌词区的模糊渐隐背景
 - 在音频所在目录查找同名的 `.lrc` 或 `.vtt` 歌词文件
 - 解析 LRC 时间标签或 Cue 时间轴并高亮当前歌词
 - 提供三种播放方式
@@ -44,6 +45,7 @@ Wolffia 面向个人本地音乐库，重点是打开即用：选择音乐文件
 | ------------------------------------------------------------------------------------------------------ | -------------------------------- |
 | ![Python](https://img.shields.io/badge/Python-3.13%2B-3776AB?logo=python&logoColor=white)              | 应用主程序和本地服务             |
 | ![pywebview](https://img.shields.io/badge/pywebview-Desktop-5A29E4?logo=webcomponents&logoColor=white) | 创建桌面窗口并加载播放器页面     |
+| ![tinytag](https://img.shields.io/badge/tinytag-2%2B-3673A3?logo=opus&logoColor=white)                 | 读取音频元数据，提取内嵌专辑图   |
 | ![uv](https://img.shields.io/badge/uv-Tooling-DE5FE9?logo=astral&logoColor=white)                      | 管理 Python 环境、依赖和项目命令 |
 
 ### 前端
@@ -82,6 +84,7 @@ wolffia/
 └── src/wolffia/                    # Python 应用包
 	├── __init__.py                 # 创建 PlayerWindow 并启动应用
 	├── core/
+	│   ├── api.py                  # pywebview API：内嵌专辑图提取、属性展示等
 	│   ├── scanner.py              # 递归扫描音频并查找同目录歌词
 	│   ├── server.py               # 本地静态文件和 Range HTTP 服务
 	│   |── ui.py                   # pywebview 窗口、文件夹选择和 API

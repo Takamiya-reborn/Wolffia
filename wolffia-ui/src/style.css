@@ -44,6 +44,44 @@ body {
 	cursor: text;
 }
 
+/* 基础层：作为中心区域，模糊度适中 */
+#lyrics-bg {
+	position: absolute;
+	inset: -10%;
+	/* 稍微向外扩展，为边缘消散留出空间 */
+	background-position: center;
+	background-size: cover;
+	opacity: 0;
+	transition: opacity 0.6s ease-out;
+	pointer-events: none;
+	filter: blur(60px) brightness(0.45) saturate(1.2);
+	/* 关键：用 radial-gradient 做遮罩，边缘直接渐隐为透明，完美融入底色 */
+	mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+	-webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+}
+
+/* 叠加层：承载边缘更重的模糊，形成"越往外越糊"的梯度感 */
+#lyrics-bg::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background-image: inherit;
+	/* 自动继承 JS 动态设置的专辑图 */
+	background-position: center;
+	background-size: cover;
+	/* 边缘层模糊半径更大，亮度压得更低 */
+	filter: blur(140px) brightness(0.35);
+	/* 中心区域完全透明，向边缘逐渐显现并消散，叠加后产生渐进模糊效果 */
+	mask-image: radial-gradient(ellipse at center, transparent 0%, black 50%, transparent 90%);
+	-webkit-mask-image: radial-gradient(ellipse at center, transparent 0%, black 50%, transparent 90%);
+}
+
+/* 原本的 #lyrics-bg::after 黑色遮罩可以直接删除了 */
+
+#lyrics-bg.is-visible {
+	opacity: 1;
+}
+
 .lrc-active {
 	color: var(--text-strong) !important;
 	font-size: clamp(22px, 2.5vw, 30px) !important;

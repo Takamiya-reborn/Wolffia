@@ -324,6 +324,15 @@ wheels = [
 ]
 
 [[package]]
+name = "tinytag"
+version = "2.3.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/38/0f/fae085b7f19fe0c67b68e6d70098ac6cd046cc498f253f5ee56a3dd03bbc/tinytag-2.3.2.tar.gz", hash = "sha256:021d711cdbdbf840d3b67b976cb34dadc58d2fcfd490eb74ef9602b37b991414", size = 47353, upload-time = "2026-09-07T17:46:08.886Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6b/54/d378858d14e5c5c7b921cb9ffccf27be3d34f3d6d010c57404ddd634685d/tinytag-2.3.2-py3-none-any.whl", hash = "sha256:ebaf957915266b9c20414a10f8c5170a345aa039a794650d39d66e7d6b96199f", size = 37171, upload-time = "2026-09-07T17:46:07.434Z" },
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.16.0"
 source = { registry = "https://pypi.org/simple" }
@@ -339,6 +348,7 @@ source = { editable = "." }
 dependencies = [
     { name = "pyinstaller" },
     { name = "pywebview" },
+    { name = "tinytag" },
 ]
 
 [package.dev-dependencies]
@@ -350,6 +360,7 @@ dev = [
 requires-dist = [
     { name = "pyinstaller", specifier = ">=6.22.3" },
     { name = "pywebview", specifier = ">=6.2.1" },
+    { name = "tinytag", specifier = ">=2.3.2" },
 ]
 
 [package.metadata.requires-dev]
