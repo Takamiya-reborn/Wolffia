@@ -11,6 +11,11 @@ let currentIdx = -1;
 let selectingFolder = false;
 let contextMenuSongPath = null;
 let loopMode = "once";
+// 随机播放的洗牌队列：shuffleDir 记录队列对应的目录，
+// shuffleQueue 保存该目录洗牌后的待播索引（Fisher-Yates），
+// 一轮播完才重新洗牌，保证每首歌在一轮内恰好播放一次
+let shuffleDir = null;
+let shuffleQueue = [];
 
 const { audio, volume, volumeValue, duration, progress, lyricsBg, lyricsWrapper: wrapper,
 	lyricsContainer, playToggle, muteToggle, currentTime, playlist, playlistCount,
@@ -95,6 +100,9 @@ function updatePlayerState() {
 function initData(songsData, port) {
 	songs = songsData;
 	serverPort = port;
+	// 歌单已重建，旧的洗牌队列索引失效
+	shuffleDir = null;
+	shuffleQueue = [];
 	const container = document.getElementById("songs");
 	container.innerHTML = "";
 	const root = { directories: new Map(), songs: [] };
@@ -251,6 +259,9 @@ lyricsContainer.ondblclick = async () => {
 async function playSong(idx) {
 	if (idx >= songs.length) return;
 	currentIdx = idx;
+	// 手动点播的歌从洗牌队列中移除，避免刚听过的歌很快又被随机到
+	const queuePos = shuffleQueue.indexOf(idx);
+	if (queuePos !== -1) shuffleQueue.splice(queuePos, 1);
 	document
 		.querySelectorAll(".song-item")
 		.forEach((item) => item.classList.remove("active"));
@@ -283,6 +294,24 @@ async function loadAlbumArt(idx) {
 	if (idx !== currentIdx || !art) return;
 	lyricsBg.style.backgroundImage = `url("${art}")`;
 	lyricsBg.classList.add("is-visible");
+}
+
+// 获取当前目录的洗牌队列；目录变化或一轮播完时重新洗牌。
+// 重新洗牌时若第一首恰好是当前正在播放的，与第二首交换，避免跨轮连播同一首
+function ensureShuffleQueue(directorySongs, directory) {
+	if (shuffleDir !== directory || shuffleQueue.length === 0) {
+		const queue = [...directorySongs];
+		for (let i = queue.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[queue[i], queue[j]] = [queue[j], queue[i]];
+		}
+		if (queue.length > 1 && queue[0] === currentIdx) {
+			[queue[0], queue[1]] = [queue[1], queue[0]];
+		}
+		shuffleDir = directory;
+		shuffleQueue = queue;
+	}
+	return shuffleQueue;
 }
 
 function playNext() {
@@ -326,16 +355,13 @@ function playNext() {
 			}
 			break;
 
-		case 'random':
-			// 随机播放：随机选择一首（除了当前播放的）
-			const availableSongs = directorySongs.filter(index => index !== currentIdx);
-			if (availableSongs.length > 0) {
-				playSong(availableSongs[Math.floor(Math.random() * availableSongs.length)]);
-			} else if (directorySongs.length > 0) {
-				// 如果只有一首歌，播放它自己
-				playSong(directorySongs[0]);
-			}
+		case 'random': {
+			// 随机播放：按洗牌队列顺序播放，一轮播完后重新洗牌，
+			// 避免纯随机抽取导致总在几首歌之间来回跳
+			const queue = ensureShuffleQueue(directorySongs, currentDir);
+			playSong(queue.shift());
 			break;
+		}
 	}
 }
 

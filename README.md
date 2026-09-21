@@ -13,6 +13,7 @@
 ![Python](https://img.shields.io/badge/Python-3.13%2B-3776AB?logo=python&logoColor=white)
 ![Vite](https://img.shields.io/badge/Frontend-Vite-646CFF?logo=vite&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?logo=opensourceinitiative&logoColor=white)
+
 </div>
 
 Wolffia 面向个人本地音乐库，重点是打开即用：选择音乐文件夹后生成播放列表，在桌面窗口中播放音频和显示歌词。它起因于 Windows 播放器的歌词显示不够顺手，以及 MPC-BE 播放纯音频时没有视频轨，导致字幕文件无法加载，所以做了一个更轻量、功能更针对自己的播放器。
@@ -250,18 +251,7 @@ uv run python -m PyInstaller --onefile --noconsole --name wolffia --add-data "sr
 
 ## 歌词格式
 
-歌词文件需要与音频文件位于同一目录，并使用相同的文件名主体：
-
-```text
-音乐目录/
-├── 夜曲.mp3
-├── 夜曲.lrc
-├── 晴天.flac
-└── 晴天.flac.vtt
-```
-
-播放器支持 LRC 和 WebVTT（`.vtt`）歌词格式。LRC 使用去掉音频扩展名后的文件名，
-WebVTT 使用完整音频文件名再追加 `.vtt`。例如，LRC 使用以下时间标签：
+LRC格式：
 
 ```text
 [00:12.50]第一句歌词
