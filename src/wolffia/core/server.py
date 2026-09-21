@@ -46,8 +46,6 @@ class RangeHandler(BaseHTTPRequestHandler):
         # 音频拖动依赖标准 Range 响应
         self.send_response(206 if partial else 200)
 
-        self.send_header("Access-Control-Allow-Origin", "*")
-
         self.send_header("Content-Type", content_type or "application/octet-stream")
         self.send_header("Accept-Ranges", "bytes")
         if partial:
@@ -70,8 +68,19 @@ class RangeHandler(BaseHTTPRequestHandler):
             return
 
 
-def start_static_server(folder, port):
-    server = ThreadingHTTPServer(("127.0.0.1", port), RangeHandler)
+def create_static_server(folder):
+    server = ThreadingHTTPServer(("127.0.0.1", 0), RangeHandler)
+    server.document_root = os.path.realpath(folder)
+    server.daemon_threads = True
+    return server
+
+
+def start_static_server(folder, port=None):
+    server = (
+        create_static_server(folder)
+        if port is None
+        else ThreadingHTTPServer(("127.0.0.1", port), RangeHandler)
+    )
     server.document_root = os.path.realpath(folder)
     server.daemon_threads = True
     server.serve_forever()

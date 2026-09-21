@@ -71,5 +71,6 @@ class PlayerWindow:
             self._started = True
             webview.start()
         finally:
+            api.close_static_server()
             mutex.release()
             self._application_mutex = None

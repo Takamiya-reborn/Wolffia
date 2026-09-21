@@ -30,6 +30,6 @@ export const lucideIcons = {
 	ChevronRight,
 };
 
-export function refreshIcons() {
-	createIcons({ icons: lucideIcons });
+export function refreshIcons(root = document) {
+	createIcons({ icons: lucideIcons, root });
 }

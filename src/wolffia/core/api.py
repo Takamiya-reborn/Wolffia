@@ -5,6 +5,7 @@ import ctypes
 import time
 import webview
 import subprocess
+import threading
 from pathlib import Path
 from ctypes import wintypes
 
@@ -44,6 +45,7 @@ class ApplicationMutex:
         if self._handle is not None:
             self._kernel32.CloseHandle(self._handle)
             self._handle = None
+
 
 def bring_existing_window_to_top(window_title):
     """唤醒已有窗口到最前，并解决 UI 空白及任务栏闪烁问题"""
@@ -162,6 +164,8 @@ class PlayerApi:
             return
         self._music_root = None
         self._art_cache = {}
+        self._static_server = None
+        self._static_server_thread = None
         self._initialized = True
 
     def _window(self):
@@ -181,11 +185,8 @@ class PlayerApi:
         return song_path
 
     def select_folder(self):
-        import socket
-        import threading
-
         from wolffia.core.scanner import scan_folder
-        from wolffia.core.server import start_static_server
+        from wolffia.core.server import create_static_server
 
         window = self._window()
         folders = window.create_file_dialog(webview.FileDialog.FOLDER)
@@ -193,18 +194,32 @@ class PlayerApi:
         if not folder:
             return None
 
+        self.close_static_server()
         self._music_root = Path(folder).resolve()
-        songs = scan_folder(folder)
-        # 为音频 Range 请求分配临时端口
-        with socket.socket() as s:
-            s.bind(("127.0.0.1", 0))
-            port = s.getsockname()[1]
-
-        server_thread = threading.Thread(
-            target=start_static_server, args=(folder, port), daemon=True
+        self._art_cache.clear()
+        scan_result = scan_folder(folder)
+        self._static_server = create_static_server(folder)
+        self._static_server_thread = threading.Thread(
+            target=self._static_server.serve_forever, daemon=True
         )
-        server_thread.start()
-        return {"songs": songs, "port": port}
+        self._static_server_thread.start()
+        scan_result["port"] = self._static_server.server_address[1]
+        return scan_result
+
+    def get_lyrics(self, relative_path):
+        from wolffia.core.scanner import load_lyrics
+
+        if not self._music_root or not self._song_path(relative_path):
+            return []
+        return load_lyrics(self._music_root, relative_path)
+
+    def close_static_server(self):
+        server = self._static_server
+        self._static_server = None
+        self._static_server_thread = None
+        if server is not None:
+            server.shutdown()
+            server.server_close()
 
     def open_in_explorer(self, relative_path):
         song_path = self._song_path(relative_path)

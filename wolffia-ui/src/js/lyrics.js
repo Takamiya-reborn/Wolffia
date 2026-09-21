@@ -3,6 +3,8 @@ export function createLyricsController({ wrapper, container }) {
 	let lyrics = [];
 	let elements = [];
 	let activeIndex = -1;
+	let pendingCenter = 0;
+	let centerFrame = 0;
 
 	function center(index) {
 		const line = elements[index];
@@ -30,17 +32,33 @@ export function createLyricsController({ wrapper, container }) {
 	}
 
 	function update(currentTime) {
-		let nextIndex = activeIndex;
-		for (let index = lyrics.length - 1; index >= 0; index -= 1) {
-			if (currentTime >= lyrics[index].time && lyrics[index].text.trim()) {
-				nextIndex = index;
-				break;
+		let low = 0;
+		let high = lyrics.length - 1;
+		let nextIndex = -1;
+		while (low <= high) {
+			const middle = Math.floor((low + high) / 2);
+			if (currentTime >= lyrics[middle].time) {
+				nextIndex = middle;
+				low = middle + 1;
+			} else {
+				high = middle - 1;
 			}
 		}
-		if (nextIndex >= 0 && nextIndex !== activeIndex) {
+		while (nextIndex >= 0 && !lyrics[nextIndex].text.trim()) nextIndex -= 1;
+		if (nextIndex !== activeIndex) {
+			const previousIndex = activeIndex;
 			activeIndex = nextIndex;
-			elements.forEach((line, index) => line.classList.toggle("lrc-active", index === activeIndex));
-			requestAnimationFrame(() => center(activeIndex));
+			if (elements[previousIndex]) elements[previousIndex].classList.remove("lrc-active");
+			if (elements[activeIndex]) {
+				elements[activeIndex].classList.add("lrc-active");
+				pendingCenter = activeIndex;
+				if (!centerFrame) {
+					centerFrame = requestAnimationFrame(() => {
+						centerFrame = 0;
+						center(pendingCenter);
+					});
+				}
+			}
 		}
 	}
 

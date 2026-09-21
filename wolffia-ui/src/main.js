@@ -5,7 +5,9 @@ import { formatTime } from "./js/utils.js";
 import { createLyricsController } from "./js/lyrics.js";
 
 let songs = [];
+let songsByDirectory = new Map();
 let serverPort = 0;
+let directoryVersion = 0;
 let lastVolume = 1;
 let currentIdx = -1;
 let selectingFolder = false;
@@ -100,6 +102,12 @@ function updatePlayerState() {
 function initData(songsData, port) {
 	songs = songsData;
 	serverPort = port;
+	songsByDirectory = new Map();
+	songs.forEach((song, index) => {
+		const directory = song.path.substring(0, song.path.lastIndexOf('/'));
+		if (!songsByDirectory.has(directory)) songsByDirectory.set(directory, []);
+		songsByDirectory.get(directory).push(index);
+	});
 	// 歌单已重建，旧的洗牌队列索引失效
 	shuffleDir = null;
 	shuffleQueue = [];
@@ -197,7 +205,7 @@ function renderTree(node, container) {
 		container.appendChild(item);
 	});
 
-	refreshIcons();
+	refreshIcons(container);
 }
 
 function closeSongContextMenu() {
@@ -245,6 +253,14 @@ lyricsContainer.ondblclick = async () => {
 	try {
 		const result = await window.pywebview.api.select_folder();
 		if (result) {
+			directoryVersion += 1;
+			currentIdx = -1;
+			audio.pause();
+			audio.removeAttribute("src");
+			audio.load();
+			lyrics.render([]);
+			lyricsBg.classList.remove("is-visible");
+			lyricsBg.style.backgroundImage = "";
 			initData(result.songs, result.port);
 			setTitle("请选择歌曲");
 			playerHeader.classList.remove("has-song");
@@ -274,11 +290,22 @@ async function playSong(idx) {
 		// 快速切歌时上一个 play() 可能被新的加载中断（AbortError），忽略即可
 	});
 
-	lyrics.render(songs[idx].lyrics || []);
-	loadAlbumArt(idx);
+	const version = directoryVersion;
+	lyrics.render([]);
+	loadLyrics(idx, version);
+	loadAlbumArt(idx, version);
 }
 
-async function loadAlbumArt(idx) {
+async function loadLyrics(idx, version) {
+	try {
+		const loadedLyrics = await window.pywebview.api.get_lyrics(songs[idx].path);
+		if (version === directoryVersion && idx === currentIdx) lyrics.render(loadedLyrics || []);
+	} catch {
+		// Missing or unreadable lyric files do not affect playback.
+	}
+}
+
+async function loadAlbumArt(idx, version) {
 	lyricsBg.classList.remove("is-visible");
 	lyricsBg.style.backgroundImage = "";
 	const songPath = songs[idx].path;
@@ -291,7 +318,7 @@ async function loadAlbumArt(idx) {
 		return;
 	}
 	// 请求期间用户可能已切歌，忽略过期结果
-	if (idx !== currentIdx || !art) return;
+	if (version !== directoryVersion || idx !== currentIdx || !art) return;
 	lyricsBg.style.backgroundImage = `url("${art}")`;
 	lyricsBg.classList.add("is-visible");
 }
@@ -321,14 +348,7 @@ function playNext() {
 	const currentPath = currentSong.path;
 	const currentDir = currentPath.substring(0, currentPath.lastIndexOf('/'));
 
-	// 收集同一目录的所有歌曲
-	const directorySongs = [];
-	songs.forEach((song, index) => {
-		const songDir = song.path.substring(0, song.path.lastIndexOf('/'));
-		if (songDir === currentDir) {
-			directorySongs.push(index);
-		}
-	});
+	const directorySongs = songsByDirectory.get(currentDir) || [];
 
 	if (directorySongs.length === 0) return;
 
