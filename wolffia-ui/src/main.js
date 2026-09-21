@@ -4,15 +4,20 @@ import { refreshIcons } from "./js/icons.js";
 import { formatTime } from "./js/utils.js";
 import { createLyricsController } from "./js/lyrics.js";
 
+const SEEK_STEP = 5;
+const VOLUME_STEP = 0.05;
+const TITLE_FADE_WIDTH = 28;
+const ALBUM_ART_EXTENSIONS = new Set(["mp3", "flac", "m4a"]);
+
 let songs = [];
-let songsByDirectory = new Map();
-let serverPort = 0;
-let directoryVersion = 0;
-let lastVolume = 1;
-let currentIdx = -1;
-let selectingFolder = false;
-let contextMenuSongPath = null;
 let loopMode = "once";
+let currentIdx = -1;
+let lastVolume = 1;
+let serverPort = 0;
+let selectingFolder = false;
+let directoryVersion = 0;
+let songsByDirectory = new Map();
+let contextMenuSongPath = null;
 // 随机播放的洗牌队列：shuffleDir 记录队列对应的目录，
 // shuffleQueue 保存该目录洗牌后的待播索引（Fisher-Yates），
 // 一轮播完才重新洗牌，保证每首歌在一轮内恰好播放一次
@@ -24,10 +29,10 @@ const { audio, volume, volumeValue, duration, progress, lyricsBg, lyricsWrapper:
 	loopModeToggle, songContextMenu, playbackRateMenu, playbackRateLabel,
 	playbackRateToggle, playbackRateOptions, playerHeader, currentTitle, titleText } = dom;
 const lyrics = createLyricsController({ wrapper, container: lyricsContainer });
-const ALBUM_ART_EXTENSIONS = new Set(["mp3", "flac", "m4a"]);
 
-// 与 style.css 中 --title-fade 保持一致，确保滚动终点刚好露出完整歌名
-const TITLE_FADE_WIDTH = 28;
+let progressDragging = false;
+let volumeBubbleTimer = 0;
+let volumeHovering = false;
 
 function setTitle(text) {
 	titleText.innerText = text;
@@ -53,9 +58,6 @@ function updateTitleMarquee() {
 		currentTitle.classList.remove("is-overflowing");
 	}
 }
-
-// 拖动进度条期间以滑块位置为准，防止 timeupdate 回写进度与拖动互相打架（抖动）
-let progressDragging = false;
 
 progress.addEventListener("pointerdown", () => {
 	progressDragging = true;
@@ -423,7 +425,9 @@ refreshIcons();
 
 audio.ontimeupdate = () => {
 	updatePlayerState();
-	lyrics.update(audio.currentTime);
+	// 拖动中歌词跟随滑块位置（oninput 已更新），timeupdate 不回写，
+	// 否则高亮行在实际播放位置与拖动位置之间来回跳跃
+	if (!progressDragging) lyrics.update(audio.currentTime);
 };
 
 function togglePlay() {
@@ -539,9 +543,6 @@ volume.addEventListener(
 	{ passive: false },
 );
 
-let volumeBubbleTimer = 0;
-let volumeHovering = false;
-
 function showVolumeValue() {
 	volumeValue.classList.add("is-visible");
 	if (volumeHovering) return;
@@ -561,9 +562,6 @@ volume.addEventListener("mouseleave", () => {
 	volumeHovering = false;
 	volumeValue.classList.remove("is-visible");
 });
-
-const SEEK_STEP = 5;
-const VOLUME_STEP = 0.05;
 
 function seekBy(seconds) {
 	if (!Number.isFinite(audio.duration)) return;

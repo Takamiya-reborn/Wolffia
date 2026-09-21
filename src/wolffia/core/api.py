@@ -1,13 +1,17 @@
-import os
-import sys
 import base64
 import ctypes
-import time
-import webview
+import os
 import subprocess
+import sys
 import threading
+import time
 from pathlib import Path
 from ctypes import wintypes
+
+import webview
+
+# 仅处理常见内嵌封面格式
+_ALBUM_ART_SUFFIXES = {".mp3", ".flac", ".m4a"}
 
 
 class ApplicationMutex:
@@ -116,10 +120,6 @@ def bring_existing_window_to_top(window_title):
     finally:
         if attached:
             user32.AttachThreadInput(current_tid, fg_tid, False)
-
-
-# 仅处理常见内嵌封面格式
-_ALBUM_ART_SUFFIXES = {".mp3", ".flac", ".m4a"}
 
 
 def _sniff_image_mime(data):

@@ -7,6 +7,8 @@ from pathlib import Path
 from wolffia.core.ParseLRC import parse_lrc
 from wolffia.core.ParseVTT import parse_vtt
 
+MAX_LYRICS_BYTES = 1024 * 1024
+
 if os.name == "nt":
     _str_cmp_logical = ctypes.WinDLL("Shlwapi.dll").StrCmpLogicalW
     _str_cmp_logical.argtypes = (ctypes.c_wchar_p, ctypes.c_wchar_p)
@@ -42,9 +44,6 @@ def _compare_paths(left, right):
         if comparison:
             return comparison
     return (len(left_parts) > len(right_parts)) - (len(left_parts) < len(right_parts))
-
-
-MAX_LYRICS_BYTES = 1024 * 1024
 
 
 def _read_lyrics(path):

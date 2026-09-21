@@ -1,13 +1,15 @@
 import os
 import sys
-import webview
 from pathlib import Path
-from wolffia.core.api import PlayerApi, ApplicationMutex, bring_existing_window_to_top
 
-MIN_WINDOW_WIDTH = 640
-MIN_WINDOW_HEIGHT = 480
+import webview
+
+from wolffia.core.api import ApplicationMutex, PlayerApi, bring_existing_window_to_top
+
 _MUTEX_NAME = "Local\\Wolffia.Application.SingleInstance"
 _WINDOW_TITLE = "Wolffia"
+MIN_WINDOW_WIDTH = 640
+MIN_WINDOW_HEIGHT = 480
 
 
 def get_asset_path(filename):

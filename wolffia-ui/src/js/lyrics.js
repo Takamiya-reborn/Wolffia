@@ -3,8 +3,8 @@ export function createLyricsController({ wrapper, container }) {
 	let lyrics = [];
 	let elements = [];
 	let activeIndex = -1;
-	let pendingCenter = 0;
 	let centerFrame = 0;
+	let pendingCenter = 0;
 
 	function center(index) {
 		const line = elements[index];
