@@ -1,17 +1,19 @@
 <div align="center">
-
+  
 # Wolffia
+  
+</div>
+<div align="center">
 
 **Windows 平台的自用极简本地音乐播放器**
 
 选择音乐目录，播放本地音频，显示同步歌词。
 
-</div>
-
 ![Windows](https://img.shields.io/badge/Platform-Windows-0078D4?logo=windows&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.13%2B-3776AB?logo=python&logoColor=white)
 ![Vite](https://img.shields.io/badge/Frontend-Vite-646CFF?logo=vite&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?logo=opensourceinitiative&logoColor=white)
+</div>
 
 Wolffia 面向个人本地音乐库，重点是打开即用：选择音乐文件夹后生成播放列表，在桌面窗口中播放音频和显示歌词。它起因于 Windows 播放器的歌词显示不够顺手，以及 MPC-BE 播放纯音频时没有视频轨，导致字幕文件无法加载，所以做了一个更轻量、功能更针对自己的播放器。
 
