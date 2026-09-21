@@ -23,6 +23,9 @@ Wolffia 面向个人本地音乐库，重点是打开即用：选择音乐文件
 - 支持 `MP3`、`FLAC`、`WAV` 和 `M4A`
 - 从 `MP3`、`FLAC`、`M4A` 提取内嵌专辑图，作为歌词区的模糊渐隐背景
 - 在音频所在目录查找同名的 `.lrc` 或 `.vtt` 歌词文件
+  - 识别规则：
+  - 【音频名称】.【扩展名】 -> 【音频名称】.lrc
+  - 【音频名称】.【扩展名】 -> 【音频名称】.【扩展名】.vtt
 - 解析 LRC 时间标签或 Cue 时间轴并高亮当前歌词
 - 提供三种播放方式
 - 使用本机 HTTP Range 服务读取音频，适合大文件播放
@@ -68,33 +71,42 @@ Wolffia 面向个人本地音乐库，重点是打开即用：选择音乐文件
 ## 项目结构
 
 ```text
-wolffia/
-├── main.py                         # PyInstaller 使用的程序入口
-├── pyproject.toml                  # Python 项目元数据、依赖和 wolffia 命令
-├── wolffia-onedir.spec             # PyInstaller 目录模式配置
-├── wolffia-onefile.spec            # PyInstaller 单文件模式配置
-├── nuitka-onedir.ps1               # Nuitka 目录模式打包脚本
-├── nuitka-onefile.ps1              # Nuitka 单文件模式打包脚本
-├── wolffia-ui/                     # 前端源码项目
-│   ├── package.json                # npm 脚本和前端开发依赖
-│   ├── vite.config.js              # Vite 配置，构建到 src/wolffia/ui
+Wolffia/
+├── main.py                       # PyInstaller 使用的程序入口
+├── pyproject.toml                # Python 项目元数据、依赖和 wolffia 命令
+├── uv.lock                       # Python 依赖锁文件
+├── install.ps1 / install.sh      # 安装前后端依赖
+├── run.ps1 / run.sh              # 启动播放器，可选先构建前端
+├── wolffia-onedir.spec           # PyInstaller 目录模式配置
+├── wolffia-onefile.spec          # PyInstaller 单文件模式配置
+├── nuitka-onedir.ps1             # Nuitka 目录模式打包脚本
+├── nuitka-onefile.ps1            # Nuitka 单文件模式打包脚本
+├── wolffia-ui/                   # 前端源码项目
+│   ├── package.json              # npm 脚本和前端依赖
+│   ├── vite.config.js            # Vite 配置，输出到 ../src/wolffia/ui
 │   └── src/
-│       ├── main.js                 # 播放列表、音频播放和歌词逻辑
-│       └── style.css               # 播放器样式
-└── src/wolffia/                    # Python 应用包
-	├── __init__.py                 # 创建 PlayerWindow 并启动应用
-	├── core/
-	│   ├── api.py                  # pywebview API：内嵌专辑图提取、属性展示等
-	│   ├── scanner.py              # 递归扫描音频并查找同目录歌词
-	│   ├── server.py               # 本地静态文件和 Range HTTP 服务
-	│   |── ui.py                   # pywebview 窗口、文件夹选择和 API
-	|   └── ...
-	└── ui/                         # 前端构建产物，打包时嵌入应用
-		├── index.html
-		└── assets/
+│       ├── main.js               # 播放列表、音频播放和应用状态
+│       ├── js/                   # 歌词、DOM 和图标等前端逻辑
+│       ├── styles/               # 播放器各区域的样式
+│       └── style.css             # 全局样式入口
+├── src/wolffia/                  # Python 应用包
+│   ├── __init__.py               # 创建窗口并启动应用
+│   ├── core/
+│   │   ├── api.py                # pywebview API 和专辑图提取
+│   │   ├── scanner.py            # 扫描音频并查找同目录歌词
+│   │   ├── server.py             # 本地静态文件和 Range HTTP 服务
+│   │   ├── ui.py                 # pywebview 窗口和文件夹选择
+│   │   ├── ParseLRC.py           # LRC 歌词解析
+│   │   └── ParseVTT.py           # WebVTT 歌词解析
+│   └── ui/                       # Vite 构建产物，打包时嵌入应用
+│       ├── index.html
+│       └── assets/
+├── build/                        # PyInstaller 临时构建文件
+├── dist/                         # PyInstaller 最终输出
+└── nuitka/                       # Nuitka 目录模式和单文件构建输出
 ```
 
-运行流程如下：Python 启动 `pywebview` 窗口并加载 `src/wolffia/ui/index.html`；用户选择音乐目录后，Python 递归扫描音频并按相对路径生成目录树，在每个音频所在目录查找同名歌词文件，然后在 `127.0.0.1` 的动态端口启动本地服务；前端默认折叠目录，并在用户展开时懒加载子节点，通过该服务加载音频和歌词。
+运行流程如下：开发或发布前先在 `wolffia-ui/` 中执行 `npm run build`，将前端构建产物写入 `src/wolffia/ui/`；Python 启动 `pywebview` 窗口并加载其中的 `index.html`。用户选择音乐目录后，Python 递归扫描音频并按相对路径生成目录树，在每个音频所在目录查找同名歌词文件，然后在 `127.0.0.1` 的动态端口启动本地服务；前端默认折叠目录，并在用户展开时懒加载子节点，通过该服务加载音频和歌词。
 
 ## 环境要求
 
