@@ -171,6 +171,28 @@ class PlayerApi:
     def _window(self):
         return webview.windows[0]
 
+    def _refocus_window(self):
+        """文件对话框关闭后，键盘焦点会落在窗体而不是 WebView 上，
+        页面快捷键因此失效，需要把焦点交还给 WebView 控件"""
+        if sys.platform != "win32":
+            return
+        try:
+            from webview.platforms import winforms
+
+            window = self._window()
+            instance = winforms.BrowserView.instances.get(window.uid)
+            if instance is None:
+                return
+
+            def _focus():
+                instance.Activate()
+                instance.browser.webview.Focus()
+
+            instance.Invoke(winforms.Func[winforms.Type](_focus))
+        except Exception:
+            # pywebview 内部结构变化时放弃修复，不影响选目录功能
+            pass
+
     def _song_path(self, relative_path):
         if not self._music_root or not isinstance(relative_path, str):
             return None
@@ -190,6 +212,7 @@ class PlayerApi:
 
         window = self._window()
         folders = window.create_file_dialog(webview.FileDialog.FOLDER)
+        self._refocus_window()
         folder = folders[0] if folders else None
         if not folder:
             return None
