@@ -36,25 +36,41 @@ class RangeHandler(BaseHTTPRequestHandler):
                 return
             start = int(match.group(1))
             end = int(match.group(2)) if match.group(2) else end
-            if start >= size or start > end:
+            if start > end:
                 self.send_error(416)
                 return
-            end = min(end, size - 1)
+            # 播放器对时长估算偏长（如缺 Xing 头的 VBR MP3）时，
+            # seek 到末尾可能请求超出文件末尾的字节；此时返回 416 会让
+            # 音频元素进入错误态（此后 seek 全部失效），按最后一个字节处理
+            if start >= size:
+                start = end = max(size - 1, 0)
+            else:
+                end = min(end, size - 1)
 
         chunk_size = (end - start) + 1
         partial = range_header is not None
-        # 音频拖动依赖标准 Range 响应
-        self.send_response(206 if partial else 200)
 
-        self.send_header("Content-Type", content_type or "application/octet-stream")
-        self.send_header("Accept-Ranges", "bytes")
-        if partial:
-            self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
-        self.send_header("Content-Length", str(chunk_size))
-        self.end_headers()
-
+        # 先打开文件再发响应头：文件被占用或不可读时返回 500，
+        # 而不是发完 Content-Length 后中途断流——不完整的响应体
+        # 会让音频元素进入错误态、播放链中断
         try:
-            with open(full_path, "rb") as f:
+            f = open(full_path, "rb")
+        except OSError:
+            self.send_error(500)
+            return
+
+        with f:
+            # 音频拖动依赖标准 Range 响应
+            self.send_response(206 if partial else 200)
+
+            self.send_header("Content-Type", content_type or "application/octet-stream")
+            self.send_header("Accept-Ranges", "bytes")
+            if partial:
+                self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+            self.send_header("Content-Length", str(chunk_size))
+            self.end_headers()
+
+            try:
                 f.seek(start)
                 remaining = chunk_size
                 while remaining > 0:
@@ -63,9 +79,11 @@ class RangeHandler(BaseHTTPRequestHandler):
                         break
                     self.wfile.write(buffer)
                     remaining -= len(buffer)
-        except (BrokenPipeError, ConnectionAbortedError, ConnectionResetError):
-            # Browsers close obsolete Range requests while seeking or buffering.
-            return
+            except OSError:
+                # Browsers close obsolete Range requests while seeking or
+                # buffering; on Windows this surfaces as various OSError
+                # subclasses, not just the three explicit ones.
+                return
 
 
 def create_static_server(folder):

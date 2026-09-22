@@ -31,6 +31,10 @@ const { audio, volume, volumeValue, duration, progress, lyricsBg, lyricsWrapper:
 const lyrics = createLyricsController({ wrapper, container: lyricsContainer });
 
 let progressDragging = false;
+// 歌曲在拖动进度条期间自然播完时置位，等松手提交 seek 后再恢复播放
+let endedWhileDragging = false;
+// 连续加载失败的歌曲数：超过阈值说明服务器已不可用，不再自动跳歌
+let consecutiveErrors = 0;
 let volumeBubbleTimer = 0;
 let volumeHovering = false;
 
@@ -467,6 +471,12 @@ progress.oninput = () => {
 progress.onchange = () => {
 	if (!Number.isFinite(audio.duration)) return;
 	audio.currentTime = (Number(progress.value) / 100) * audio.duration;
+	// 歌曲在拖动期间自然播完：ended 被守卫拦下没有切歌，
+	// 从松手位置恢复播放；若松手位置已在末尾会再次触发 ended 正常切歌
+	if (endedWhileDragging) {
+		endedWhileDragging = false;
+		audio.play().catch(() => { });
+	}
 };
 
 function setPlaybackRate(rate) {
@@ -638,10 +648,30 @@ window.addEventListener("resize", () => {
 
 audio.onended = () => {
 	updatePlayerState();
-	// 拖动期间 seek 到结尾触发的 ended 不是自然播完，不切歌，
-	// 否则会一边拖一边连续跳歌
-	if (progressDragging) return;
+	// 拖动期间不切歌，否则会一边拖一边连续跳歌。
+	// 注意 seek 只在松手时提交，拖动中触发的 ended 一定是自然播完，
+	// 记下来等松手后恢复播放，否则这次切歌会被永远丢弃
+	if (progressDragging) {
+		endedWhileDragging = true;
+		return;
+	}
 	playNext();
+};
+
+// 加载/网络/解码错误不会触发 ended，循环与随机播放链就此中断；
+// 出错后 currentTime 赋值也会失效（表现为拖进度条没反应），
+// 只有换 src 才能恢复。这里自动跳下一首让播放继续，
+// 连续多首失败（如服务器已停止）则由阈值兜底，避免无限切歌
+audio.onerror = () => {
+	if (!audio.error || !audio.src) return;
+	if (consecutiveErrors >= 3) return;
+	consecutiveErrors += 1;
+	playNext();
+};
+
+// 真正开始出声才算播放成功，清零连续出错计数
+audio.onplaying = () => {
+	consecutiveErrors = 0;
 };
 
 updatePlayerState();
