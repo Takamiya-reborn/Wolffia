@@ -7,6 +7,10 @@ import { createLyricsController } from "./js/lyrics.js";
 const SEEK_STEP = 5;
 const VOLUME_STEP = 0.05;
 const TITLE_FADE_WIDTH = 28;
+// 列表宽度拖拽范围使用视口比例，避免窗口缩放时与固定像素边界冲突
+const LIST_MIN_RATIO = 0.28;
+const LIST_MAX_RATIO = 0.5;
+const LIST_RESIZE_STEP = 16;
 const ALBUM_ART_EXTENSIONS = new Set(["mp3", "flac", "m4a"]);
 
 let songs = [];
@@ -24,7 +28,7 @@ let contextMenuSongPath = null;
 let shuffleDir = null;
 let shuffleQueue = [];
 
-const { audio, volume, volumeValue, duration, progress, lyricsBg, lyricsWrapper: wrapper,
+const { audio, list, listResizer, volume, volumeValue, duration, progress, lyricsBg, lyricsWrapper: wrapper,
 	lyricsContainer, playToggle, muteToggle, currentTime, playlist, playlistCount,
 	loopModeToggle, songContextMenu, playbackRateMenu, playbackRateLabel,
 	playbackRateToggle, playbackRateOptions, playerHeader, currentTitle, titleText } = dom;
@@ -37,6 +41,7 @@ let endedWhileDragging = false;
 let consecutiveErrors = 0;
 let volumeBubbleTimer = 0;
 let volumeHovering = false;
+let listResizing = false;
 
 function setTitle(text) {
 	titleText.innerText = text;
@@ -71,6 +76,49 @@ window.addEventListener("pointerup", () => {
 });
 window.addEventListener("pointercancel", () => {
 	progressDragging = false;
+});
+
+// —— 列表宽度拖拽——
+function setListWidth(width) {
+	const viewportWidth = window.innerWidth;
+	const lower = viewportWidth * LIST_MIN_RATIO;
+	const upper = viewportWidth * LIST_MAX_RATIO;
+	const clamped = Math.min(Math.max(width, lower), upper);
+	list.style.setProperty("--list-width", `${(clamped / viewportWidth) * 100}vw`);
+}
+
+listResizer.addEventListener("pointerdown", (event) => {
+	listResizing = true;
+	// 捕获指针，快速拖动时事件仍派发到手柄而非穿透到列表/歌词区
+	listResizer.setPointerCapture(event.pointerId);
+	document.body.classList.add("is-resizing-list");
+});
+
+listResizer.addEventListener("pointermove", (event) => {
+	if (listResizing) setListWidth(event.clientX);
+});
+
+function endListResize() {
+	listResizing = false;
+	document.body.classList.remove("is-resizing-list");
+}
+
+listResizer.addEventListener("pointerup", endListResize);
+listResizer.addEventListener("pointercancel", endListResize);
+
+// 双击复位到默认宽度
+listResizer.addEventListener("dblclick", () => {
+	setListWidth(window.innerWidth * LIST_MIN_RATIO);
+});
+
+// 键盘微调宽度；阻止冒泡，避免触发全局的快进/后退
+listResizer.addEventListener("keydown", (event) => {
+	if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+	event.preventDefault();
+	event.stopPropagation();
+	const delta =
+		event.key === "ArrowRight" ? LIST_RESIZE_STEP : -LIST_RESIZE_STEP;
+	setListWidth(list.getBoundingClientRect().width + delta);
 });
 
 function updatePlayerState() {
@@ -637,6 +685,8 @@ audio.onplay = updatePlayerState;
 audio.onpause = updatePlayerState;
 
 window.addEventListener("resize", () => {
+	// 拖宽列表后再缩小窗口时，把宽度收回可用范围内
+	setListWidth(list.getBoundingClientRect().width);
 	updateTitleMarquee();
 	if (currentIdx >= 0) {
 		const activeLine = wrapper.querySelector(".lrc-active");

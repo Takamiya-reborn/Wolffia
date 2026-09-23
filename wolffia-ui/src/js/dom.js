@@ -1,6 +1,8 @@
 // 集中管理页面 DOM 引用，避免业务代码反复查询元素。
 export const dom = {
 	audio: document.getElementById("audio"),
+	list: document.getElementById("list"),
+	listResizer: document.getElementById("list-resizer"),
 	volume: document.getElementById("volume"),
 	volumeValue: document.getElementById("volume-value"),
 	duration: document.getElementById("duration"),

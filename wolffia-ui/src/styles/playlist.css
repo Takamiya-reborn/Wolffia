@@ -1,4 +1,44 @@
 /* 播放列表与右键菜单 */
+
+/* 列表宽度：默认占视口 28%，由拖拽手柄在 28%–50% 之间调整 */
+#list {
+	flex: 0 0 var(--list-width, 28vw);
+}
+
+/* VSCode 侧边栏式拖拽手柄：悬停/拖动时高亮。
+   视觉只有 2px，判定热区由 ::after 向两侧各延伸 4px */
+#list-resizer {
+	flex: 0 0 0;
+	position: relative;
+	cursor: col-resize;
+	touch-action: none;
+}
+
+#list-resizer::after {
+	content: "";
+	position: absolute;
+	inset: 0 -2px;
+	background: transparent;
+	transition: background-color 150ms;
+}
+
+#list-resizer:hover,
+#list-resizer:focus-visible,
+body.is-resizing-list #list-resizer {
+	background-color: transparent;
+}
+
+#list-resizer:hover::after,
+#list-resizer:focus-visible::after,
+body.is-resizing-list #list-resizer::after {
+	background-color: var(--accent);
+}
+
+body.is-resizing-list {
+	cursor: col-resize;
+	user-select: none;
+}
+
 #songs {
 	scrollbar-width: auto !important;
 	scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;

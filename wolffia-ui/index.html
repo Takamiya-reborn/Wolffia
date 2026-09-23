@@ -12,7 +12,7 @@
     >
       <aside
         id="list"
-        class="flex min-w-0 flex-[0_0_280px] flex-col overflow-hidden border-r border-(--line) bg-[rgba(21,23,21,0.84)] px-0 pb-5 pt-4 max-[760px]:basis-55"
+        class="flex min-w-0 flex-col overflow-hidden border-r border-(--line) bg-[rgba(21,23,21,0.84)] px-0 pb-5 pt-4"
       >
         <header
           class="flex shrink-0 items-center gap-1.5 border-b border-(--line) py-3 pr-3 pl-7.75"
@@ -48,6 +48,14 @@
           </button>
         </div>
       </aside>
+      <div
+        id="list-resizer"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="调整列表宽度"
+        title="拖拽调整列表宽度（双击复位）"
+        tabindex="0"
+      ></div>
       <section
         id="player-zone"
         class="flex min-w-0 flex-1 flex-col items-center px-10 pt-10.5 max-[760px]:px-5.5 max-[760px]:pt-8"
