@@ -1,8 +1,8 @@
 /* 播放列表与右键菜单 */
 
-/* 列表宽度：默认占视口 28%，由拖拽手柄在 28%–50% 之间调整 */
+/* 列表宽度：默认占视口 20%，由拖拽手柄在 20%–50% 之间调整 */
 #list {
-	flex: 0 0 var(--list-width, 28vw);
+	flex: 0 0 var(--list-width, 20vw);
 }
 
 /* VSCode 侧边栏式拖拽手柄：悬停/拖动时高亮。
@@ -70,7 +70,7 @@ body.is-resizing-list {
 
 .song-context-menu {
 	position: fixed;
-	z-index: 10;
+	z-index: 30;
 	min-width: 176px;
 	padding: 5px;
 	border: 1px solid rgba(215, 221, 214, 0.14);

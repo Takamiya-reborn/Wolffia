@@ -245,10 +245,10 @@ class PlayerApi:
             server.server_close()
 
     def open_in_explorer(self, relative_path):
-        song_path = self._song_path(relative_path)
-        if not song_path or not song_path.is_file():
+        path = self._song_path(relative_path)
+        if not path or not path.exists():
             return False
-        subprocess.Popen(["explorer.exe", "/select,", os.fspath(song_path)])
+        subprocess.Popen(["explorer.exe", "/select,", os.fspath(path)])
         return True
 
     def get_album_art(self, relative_path):
@@ -264,11 +264,9 @@ class PlayerApi:
         return self._art_cache[relative_path]
 
     def show_properties(self, relative_path):
-        song_path = self._song_path(relative_path)
-        if not song_path or not song_path.is_file():
+        path = self._song_path(relative_path)
+        if not path or not path.exists():
             return False
         return bool(
-            ctypes.windll.shell32.SHObjectProperties(
-                None, 2, os.fspath(song_path), None
-            )
+            ctypes.windll.shell32.SHObjectProperties(None, 2, os.fspath(path), None)
         )

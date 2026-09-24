@@ -8,7 +8,7 @@ const SEEK_STEP = 5;
 const VOLUME_STEP = 0.05;
 const TITLE_FADE_WIDTH = 28;
 // 列表宽度拖拽范围使用视口比例，避免窗口缩放时与固定像素边界冲突
-const LIST_MIN_RATIO = 0.28;
+const LIST_MIN_RATIO = 0.2;
 const LIST_MAX_RATIO = 0.5;
 const LIST_RESIZE_STEP = 16;
 const ALBUM_ART_EXTENSIONS = new Set(["mp3", "flac", "m4a"]);
@@ -21,7 +21,7 @@ let serverPort = 0;
 let selectingFolder = false;
 let directoryVersion = 0;
 let songsByDirectory = new Map();
-let contextMenuSongPath = null;
+let contextMenuPath = null;
 // 随机播放的洗牌队列：shuffleDir 记录队列对应的目录，
 // shuffleQueue 保存该目录洗牌后的待播索引（Fisher-Yates），
 // 一轮播完才重新洗牌，保证每首歌在一轮内恰好播放一次
@@ -186,8 +186,9 @@ function initData(songsData, port) {
 	playlistCount.innerText = `${songs.length} 首`;
 }
 
-function renderTree(node, container) {
+function renderTree(node, container, parentPath = "") {
 	node.directories.forEach((directoryNode, name) => {
+		const directoryPath = parentPath ? `${parentPath}/${name}` : name;
 		const chevron = document.createElement("i");
 		const folderIcon = document.createElement("i");
 		const children = document.createElement("div");
@@ -219,11 +220,17 @@ function renderTree(node, container) {
 		let rendered = false;
 		toggle.onclick = () => {
 			if (!rendered) {
-				renderTree(directoryNode, childrenInner);
+				renderTree(directoryNode, childrenInner, directoryPath);
 				rendered = true;
 			}
 			const isExpanded = children.classList.toggle("expanded");
 			toggle.classList.toggle("expanded", isExpanded);
+		};
+		toggle.oncontextmenu = (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			contextMenuPath = directoryPath;
+			openSongContextMenu(event.clientX, event.clientY);
 		};
 
 		children.appendChild(childrenInner);
@@ -253,7 +260,7 @@ function renderTree(node, container) {
 		item.onclick = () => playSong(index);
 		item.oncontextmenu = (event) => {
 			event.preventDefault();
-			contextMenuSongPath = song.path;
+			contextMenuPath = song.path;
 			openSongContextMenu(event.clientX, event.clientY);
 		};
 		container.appendChild(item);
@@ -264,7 +271,7 @@ function renderTree(node, container) {
 
 function closeSongContextMenu() {
 	songContextMenu.hidden = true;
-	contextMenuSongPath = null;
+	contextMenuPath = null;
 }
 
 function openSongContextMenu(clientX, clientY) {
@@ -278,14 +285,14 @@ function openSongContextMenu(clientX, clientY) {
 
 songContextMenu.onclick = async (event) => {
 	const action = event.target.closest("[data-action]")?.dataset.action;
-	if (!action || !contextMenuSongPath) return;
+	if (!action || !contextMenuPath) return;
 
-	const songPath = contextMenuSongPath;
+	const selectedPath = contextMenuPath;
 	closeSongContextMenu();
 	if (action === "open-in-explorer") {
-		await window.pywebview.api.open_in_explorer(songPath);
+		await window.pywebview.api.open_in_explorer(selectedPath);
 	} else if (action === "show-properties") {
-		await window.pywebview.api.show_properties(songPath);
+		await window.pywebview.api.show_properties(selectedPath);
 	}
 };
 
