@@ -11,6 +11,7 @@ import {
 	ListMusic,
 	ChevronUp,
 	ChevronRight,
+	Image,
 	createIcons,
 } from "lucide";
 
@@ -28,6 +29,7 @@ export const lucideIcons = {
 	ListMusic,
 	ChevronUp,
 	ChevronRight,
+	Image,
 };
 
 export function refreshIcons(root = document) {

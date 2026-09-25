@@ -27,12 +27,25 @@ let contextMenuPath = null;
 // 一轮播完才重新洗牌，保证每首歌在一轮内恰好播放一次
 let shuffleDir = null;
 let shuffleQueue = [];
+let artworkMode = false;
 
-const { audio, list, listResizer, volume, volumeValue, duration, progress, lyricsBg, lyricsWrapper: wrapper,
-	lyricsContainer, playToggle, muteToggle, currentTime, playlist, playlistCount,
+const { audio, list, listResizer, volume, volumeValue, duration, progress, lyricsBg, lyricsArea, lyricsArtToggle,
+	lyricsWrapper: wrapper, lyricsContainer, playToggle, muteToggle, currentTime, playlist, playlistCount,
 	loopModeToggle, songContextMenu, playbackRateMenu, playbackRateLabel,
 	playbackRateToggle, playbackRateOptions, playerHeader, currentTitle, titleText } = dom;
 const lyrics = createLyricsController({ wrapper, container: lyricsContainer });
+
+function setArtworkMode(enabled) {
+	artworkMode = enabled;
+	lyricsArea.classList.toggle("is-artwork-mode", artworkMode);
+	lyricsArtToggle.setAttribute("aria-pressed", artworkMode);
+	lyricsArtToggle.setAttribute("aria-label", artworkMode ? "显示歌词" : "显示专辑图");
+	lyricsArtToggle.title = artworkMode ? "显示歌词" : "显示专辑图";
+}
+
+lyricsArtToggle.onclick = () => {
+	setArtworkMode(!artworkMode);
+};
 
 let progressDragging = false;
 // 歌曲在拖动进度条期间自然播完时置位，等松手提交 seek 后再恢复播放
@@ -306,7 +319,8 @@ document.addEventListener("keydown", (event) => {
 	if (event.key === "Escape") closeSongContextMenu();
 });
 
-lyricsContainer.ondblclick = async () => {
+lyricsArea.ondblclick = async (event) => {
+	if (event.target.closest("button")) return;
 	if (selectingFolder) return;
 	selectingFolder = true;
 	const previousTitle = titleText.innerText;
@@ -320,6 +334,8 @@ lyricsContainer.ondblclick = async () => {
 			audio.removeAttribute("src");
 			audio.load();
 			lyrics.render([]);
+			lyricsArea.classList.add("is-no-art");
+			setArtworkMode(artworkMode);
 			lyricsBg.classList.remove("is-visible");
 			lyricsBg.style.backgroundImage = "";
 			initData(result.songs, result.port);
@@ -367,6 +383,7 @@ async function loadLyrics(idx, version) {
 }
 
 async function loadAlbumArt(idx, version) {
+	lyricsArea.classList.add("is-no-art");
 	lyricsBg.classList.remove("is-visible");
 	lyricsBg.style.backgroundImage = "";
 	const songPath = songs[idx].path;
@@ -382,6 +399,7 @@ async function loadAlbumArt(idx, version) {
 	if (version !== directoryVersion || idx !== currentIdx || !art) return;
 	lyricsBg.style.backgroundImage = `url("${art}")`;
 	lyricsBg.classList.add("is-visible");
+	lyricsArea.classList.remove("is-no-art");
 }
 
 // 获取当前目录的洗牌队列；目录变化或一轮播完时重新洗牌。
