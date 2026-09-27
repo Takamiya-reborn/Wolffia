@@ -31,7 +31,7 @@ let artworkMode = false;
 
 const { audio, list, listResizer, volume, volumeValue, duration, progress, lyricsBg, lyricsArea, lyricsArtToggle,
 	lyricsWrapper: wrapper, lyricsContainer, playToggle, muteToggle, currentTime, playlist, playlistCount,
-	loopModeToggle, songContextMenu, playbackRateMenu, playbackRateLabel,
+	loopModeToggle, songContextMenu, titleContextMenu, playbackRateMenu, playbackRateLabel,
 	playbackRateToggle, playbackRateOptions, playerHeader, currentTitle, titleText } = dom;
 const lyrics = createLyricsController({ wrapper, container: lyricsContainer });
 
@@ -287,13 +287,19 @@ function closeSongContextMenu() {
 	contextMenuPath = null;
 }
 
-function openSongContextMenu(clientX, clientY) {
-	songContextMenu.hidden = false;
-	const menuRect = songContextMenu.getBoundingClientRect();
+// 通用右键菜单定位：弹出前先关闭其它菜单，并夹紧到视口内（四周留 8px 边距）
+function openContextMenu(menu, clientX, clientY) {
+	closeSongContextMenu();
+	menu.hidden = false;
+	const menuRect = menu.getBoundingClientRect();
 	const left = Math.min(clientX, window.innerWidth - menuRect.width - 8);
 	const top = Math.min(clientY, window.innerHeight - menuRect.height - 8);
-	songContextMenu.style.left = `${Math.max(8, left)}px`;
-	songContextMenu.style.top = `${Math.max(8, top)}px`;
+	menu.style.left = `${Math.max(8, left)}px`;
+	menu.style.top = `${Math.max(8, top)}px`;
+}
+
+function openSongContextMenu(clientX, clientY) {
+	openContextMenu(songContextMenu, clientX, clientY);
 }
 
 songContextMenu.onclick = async (event) => {
@@ -313,11 +319,43 @@ document.addEventListener("click", (event) => {
 	if (!songContextMenu.hidden && !songContextMenu.contains(event.target)) {
 		closeSongContextMenu();
 	}
+	if (!titleContextMenu.hidden && !titleContextMenu.contains(event.target)) {
+		titleContextMenu.hidden = true;
+	}
 });
 
 document.addEventListener("keydown", (event) => {
-	if (event.key === "Escape") closeSongContextMenu();
+	if (event.key === "Escape") {
+		closeSongContextMenu();
+		titleContextMenu.hidden = true;
+	}
 });
+
+// 标题栏右键菜单：歌名过长时划词选不全，改为直接整名复制
+currentTitle.oncontextmenu = (event) => {
+	event.preventDefault();
+	titleContextMenu.hidden = true;
+	openContextMenu(titleContextMenu, event.clientX, event.clientY);
+};
+
+titleContextMenu.onclick = async (event) => {
+	const action = event.target.closest("[data-action]")?.dataset.action;
+	if (action !== "copy-title") return;
+
+	const selectedTitle = titleText.innerText;
+	titleContextMenu.hidden = true;
+	try {
+		await navigator.clipboard.writeText(selectedTitle);
+	} catch {
+		// 回退方案：clipboard API 在部分 webview 环境不可用时走 execCommand
+		const helper = document.createElement("textarea");
+		helper.value = selectedTitle;
+		document.body.appendChild(helper);
+		helper.select();
+		document.execCommand("copy");
+		helper.remove();
+	}
+};
 
 lyricsArea.ondblclick = async (event) => {
 	if (event.target.closest("button")) return;

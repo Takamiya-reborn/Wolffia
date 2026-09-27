@@ -20,6 +20,7 @@ export const dom = {
 	playlistCount: document.getElementById("playlist-count"),
 	loopModeToggle: document.getElementById("loop-mode-toggle"),
 	songContextMenu: document.getElementById("song-context-menu"),
+	titleContextMenu: document.getElementById("title-context-menu"),
 	playbackRateMenu: document.getElementById("playback-rate-menu"),
 	playbackRateLabel: document.getElementById("playback-rate-label"),
 	playbackRateToggle: document.getElementById("playback-rate-toggle"),

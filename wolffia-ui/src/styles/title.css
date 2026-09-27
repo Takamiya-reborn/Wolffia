@@ -8,9 +8,9 @@
 	justify-content: center;
 	min-width: 0;
 	overflow: hidden;
-	-webkit-user-select: text;
-	user-select: text;
-	cursor: text;
+	/* 不提供划词复制：歌名过长时选不全，统一走右键"复制作品名" */
+	-webkit-user-select: none;
+	user-select: none;
 	--title-fade: 28px;
 	-webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--title-fade), #000 calc(100% - var(--title-fade)), transparent 100%);
 	mask-image: linear-gradient(to right, transparent 0, #000 var(--title-fade), #000 calc(100% - var(--title-fade)), transparent 100%);
