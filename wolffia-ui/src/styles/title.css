@@ -23,6 +23,9 @@
 
 #current-title.is-overflowing {
 	justify-content: flex-start;
+	/* 左对齐时首个字贴着容器左缘，取消左侧渐隐避免被遮罩盖住，仅保留右侧 */
+	-webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - var(--title-fade)), transparent 100%);
+	mask-image: linear-gradient(to right, #000 0, #000 calc(100% - var(--title-fade)), transparent 100%);
 }
 
 #current-title.is-overflowing .title-text {
