@@ -288,8 +288,11 @@ function closeSongContextMenu() {
 }
 
 // 通用右键菜单定位：弹出前先关闭其它菜单，并夹紧到视口内（四周留 8px 边距）
+// 注意：不能无脑调用 closeSongContextMenu()——打开歌曲菜单本身时会把它刚记录的 contextMenuPath 清掉，
+// 导致"在资源管理器打开/属性"因 path 为空而失效
 function openContextMenu(menu, clientX, clientY) {
-	closeSongContextMenu();
+	if (menu !== songContextMenu) closeSongContextMenu();
+	if (menu !== titleContextMenu) titleContextMenu.hidden = true;
 	menu.hidden = false;
 	const menuRect = menu.getBoundingClientRect();
 	const left = Math.min(clientX, window.innerWidth - menuRect.width - 8);
