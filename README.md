@@ -36,7 +36,7 @@ Wolffia 面向个人本地音乐库，重点是打开即用：选择音乐文件
 - 提供三种播放方式
 - 使用本机 HTTP Range 服务读取音频，适合大文件播放
 - 可打包单个 Windows `.exe`，免安装
-- 如果担心程序经常读写磁盘Temp消耗磁盘寿命，就使用onedir打包后的
+- 如果担心程序经常读写磁盘Temp消耗磁盘寿命，就使用带目录文件打包后的
 
 ## 快捷键
 
@@ -85,7 +85,7 @@ Wolffia/
 ├── run.ps1 / run.sh              # 启动播放器，可选先构建前端
 ├── wolffia-onedir.spec           # PyInstaller 目录模式配置
 ├── wolffia-onefile.spec          # PyInstaller 单文件模式配置
-├── nuitka-onedir.ps1             # Nuitka 目录模式打包脚本
+├── nuitka-standalone.ps1             # Nuitka 目录模式打包脚本
 ├── nuitka-onefile.ps1            # Nuitka 单文件模式打包脚本
 ├── wolffia-ui/                   # 前端源码项目
 │   ├── package.json              # npm 脚本和前端依赖
@@ -232,7 +232,7 @@ uv run python -m PyInstaller --onefile --noconsole --name wolffia --add-data "sr
 目录模式：
 
 ```powershell
-.\nuitka-onedir.ps1
+.\nuitka-standalone.ps1
 ```
 
 单文件模式：
@@ -241,7 +241,7 @@ uv run python -m PyInstaller --onefile --noconsole --name wolffia --add-data "sr
 .\nuitka-onefile.ps1
 ```
 
-两个脚本都会使用 Nuitka 编译 Python 程序，将 `src/wolffia/ui/` 作为 `ui` 数据目录嵌入，并关闭控制台窗口。目录模式的构建结果位于 `nuitka/onedir/`，单文件模式的构建结果位于 `nuitka/onefile/`。
+两个脚本都会使用 Nuitka 编译 Python 程序，将 `src/wolffia/ui/` 作为 `ui` 数据目录嵌入，并关闭控制台窗口。目录模式的构建结果位于 `nuitka/standalone/`，单文件模式的构建结果位于 `nuitka/onefile/`。
 
 ## 部署与使用
 

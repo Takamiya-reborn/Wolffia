@@ -6,6 +6,6 @@ uv run python -m nuitka `
 	--python-flag=-OO `
 	--include-data-dir="src/wolffia/ui=ui" `
 	--output-filename="wolffia.exe" `
-	--output-dir="nuitka/onedir" `
+	--output-dir="nuitka/standalone" `
 	--assume-yes-for-downloads `
 	main.py
