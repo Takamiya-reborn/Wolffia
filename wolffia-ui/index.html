@@ -97,13 +97,25 @@
             暂无专辑图
           </div>
           <button
+            id="window-pin-toggle"
+            class="lyrics-art-toggle window-pin-toggle"
+            type="button"
+            aria-pressed="false"
+            aria-label="窗口置顶"
+            title="窗口置顶"
+          >
+            <i data-lucide="pin" class="icon-pin" aria-hidden="true"></i>
+            <i data-lucide="pin-off" class="icon-pin-off" aria-hidden="true"></i>
+          </button>
+          <button
             id="lyrics-art-toggle"
             class="lyrics-art-toggle"
             type="button"
             aria-label="显示专辑图"
             title="显示专辑图"
           >
-            <i data-lucide="image" aria-hidden="true"></i>
+            <i data-lucide="image" class="icon-image" aria-hidden="true"></i>
+            <i data-lucide="image-off" class="icon-image-off" aria-hidden="true"></i>
           </button>
           <div
             id="lyrics-container"

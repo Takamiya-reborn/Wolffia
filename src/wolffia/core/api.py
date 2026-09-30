@@ -171,6 +171,33 @@ class PlayerApi:
     def _window(self):
         return webview.windows[0]
 
+    def set_always_on_top(self, enabled):
+        """切换窗口置顶显示。
+        WinForms 窗体属性只能在 UI 线程上设置，而 JS API 调用跑在线程池，
+        需自行封送（pywebview 内置的 set_on_top 未做 Invoke 封送，直接调用会崩溃）"""
+        window = self._window()
+        if window is None:
+            return False
+
+        if sys.platform == "win32":
+            try:
+                from webview.platforms import winforms
+
+                instance = winforms.BrowserView.instances.get(window.uid)
+                if instance is None:
+                    return False
+
+                def _set_topmost():
+                    instance.TopMost = bool(enabled)
+
+                instance.Invoke(winforms.Func[winforms.Type](_set_topmost))
+            except Exception:
+                # pywebview 内部结构变化时放弃置顶，不影响播放功能
+                return False
+        else:
+            window.on_top = bool(enabled)
+        return True
+
     def _refocus_window(self):
         """文件对话框关闭后，键盘焦点会落在窗体而不是 WebView 上，
         页面快捷键因此失效，需要把焦点交还给 WebView 控件"""

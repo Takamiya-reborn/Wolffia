@@ -11,6 +11,7 @@ export const dom = {
 	lyricsArea: document.getElementById("lyrics-area"),
 	lyricsArtEmpty: document.getElementById("lyrics-art-empty"),
 	lyricsArtToggle: document.getElementById("lyrics-art-toggle"),
+	pinToggle: document.getElementById("window-pin-toggle"),
 	lyricsWrapper: document.getElementById("lyrics-wrapper"),
 	lyricsContainer: document.getElementById("lyrics-container"),
 	playToggle: document.getElementById("play-toggle"),

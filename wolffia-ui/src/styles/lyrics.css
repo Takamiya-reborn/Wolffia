@@ -67,6 +67,35 @@
 	height: 16px;
 }
 
+/* pin 按钮复用 lyrics-art-toggle 的外观，排在专辑图开关左侧 */
+.window-pin-toggle {
+	right: 62px;
+}
+
+#lyrics-art-toggle .icon-image-off {
+	display: none;
+}
+
+#lyrics-art-toggle[aria-pressed="true"] .icon-image {
+	display: none;
+}
+
+#lyrics-art-toggle[aria-pressed="true"] .icon-image-off {
+	display: block;
+}
+
+.window-pin-toggle .icon-pin-off {
+	display: none;
+}
+
+.window-pin-toggle.is-pinned .icon-pin {
+	display: none;
+}
+
+.window-pin-toggle.is-pinned .icon-pin-off {
+	display: block;
+}
+
 .lyrics-art-toggle:hover:not(:disabled),
 .lyrics-art-toggle[aria-pressed="true"] {
 	border-color: rgba(169, 201, 160, 0.55);

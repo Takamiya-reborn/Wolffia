@@ -12,6 +12,9 @@ import {
 	ChevronUp,
 	ChevronRight,
 	Image,
+	ImageOff,
+	Pin,
+	PinOff,
 	createIcons,
 } from "lucide";
 
@@ -30,6 +33,9 @@ export const lucideIcons = {
 	ChevronUp,
 	ChevronRight,
 	Image,
+	ImageOff,
+	Pin,
+	PinOff,
 };
 
 export function refreshIcons(root = document) {

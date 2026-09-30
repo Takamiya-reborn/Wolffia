@@ -29,7 +29,7 @@ let shuffleDir = null;
 let shuffleQueue = [];
 let artworkMode = false;
 
-const { audio, list, listResizer, volume, volumeValue, duration, progress, lyricsBg, lyricsArea, lyricsArtToggle,
+const { audio, list, listResizer, volume, volumeValue, duration, progress, lyricsBg, lyricsArea, lyricsArtToggle, pinToggle,
 	lyricsWrapper: wrapper, lyricsContainer, playToggle, muteToggle, currentTime, playlist, playlistCount,
 	loopModeToggle, songContextMenu, titleContextMenu, playbackRateMenu, playbackRateLabel,
 	playbackRateToggle, playbackRateOptions, playerHeader, currentTitle, titleText } = dom;
@@ -45,6 +45,29 @@ function setArtworkMode(enabled) {
 
 lyricsArtToggle.onclick = () => {
 	setArtworkMode(!artworkMode);
+};
+
+// —— 窗口置顶——
+let alwaysOnTop = false;
+
+function setPinUI(pinned) {
+	alwaysOnTop = pinned;
+	pinToggle.classList.toggle("is-pinned", pinned);
+	pinToggle.setAttribute("aria-pressed", pinned);
+	pinToggle.setAttribute("aria-label", pinned ? "取消窗口置顶" : "窗口置顶");
+	pinToggle.title = pinned ? "取消窗口置顶" : "窗口置顶";
+}
+
+pinToggle.onclick = async () => {
+	const next = !alwaysOnTop;
+	try {
+		const applied = await window.pywebview.api.set_always_on_top(next);
+		// 后端未就绪或置顶失败（返回 false）时保持原状态，UI 与实际行为一致
+		if (!applied) return;
+	} catch {
+		return;
+	}
+	setPinUI(next);
 };
 
 let progressDragging = false;
