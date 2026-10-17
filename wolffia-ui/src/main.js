@@ -29,9 +29,9 @@ let shuffleDir = null;
 let shuffleQueue = [];
 let artworkMode = false;
 
-const { audio, list, listResizer, volume, volumeValue, duration, progress, lyricsBg, lyricsArea, lyricsArtToggle, pinToggle,
+const { audio, list, listResizer, volume, volumeValue, volumeControl, volumePopup, duration, progress, lyricsBg, lyricsArea, lyricsArtToggle, pinToggle,
 	lyricsWrapper: wrapper, lyricsContainer, playToggle, muteToggle, currentTime, playlist, playlistCount,
-	loopModeToggle, songContextMenu, titleContextMenu, playbackRateMenu, playbackRateLabel,
+	loopModeToggle, songContextMenu, titleContextMenu, playbackRateMenu,
 	playbackRateToggle, playbackRateOptions, playerHeader, currentTitle, titleText } = dom;
 const lyrics = createLyricsController({ wrapper, container: lyricsContainer });
 
@@ -76,7 +76,6 @@ let endedWhileDragging = false;
 // 连续加载失败的歌曲数：超过阈值说明服务器已不可用，不再自动跳歌
 let consecutiveErrors = 0;
 let volumeBubbleTimer = 0;
-let volumeHovering = false;
 let listResizing = false;
 
 function setTitle(text) {
@@ -630,7 +629,7 @@ progress.onchange = () => {
 
 function setPlaybackRate(rate) {
 	audio.playbackRate = rate;
-	playbackRateLabel.innerText = `${rate}x`;
+	playbackRateToggle.classList.toggle("is-active", rate !== 1);
 	playbackRateOptions.forEach((option) => {
 		const isSelected = Number(option.dataset.rate) === rate;
 		option.classList.toggle("is-selected", isSelected);
@@ -638,22 +637,20 @@ function setPlaybackRate(rate) {
 	});
 }
 
-function closePlaybackRateMenu() {
-	playbackRateMenu.hidden = true;
-	playbackRateToggle.setAttribute("aria-expanded", "false");
+function setPlaybackRateMenuOpen(open) {
+	playbackRateMenu.classList.toggle("is-visible", open);
+	playbackRateToggle.setAttribute("aria-expanded", String(open));
 }
 
-playbackRateToggle.onclick = (event) => {
-	event.stopPropagation();
-	playbackRateMenu.hidden = !playbackRateMenu.hidden;
-	playbackRateToggle.setAttribute("aria-expanded", String(!playbackRateMenu.hidden));
-};
+// 菜单的 hover 显隐由 CSS(.speed-control:hover)处理，这里只同步 aria-expanded；
+// 键盘操作（Enter/方向键）走 is-visible，与音量弹层同一套机制
+const speedControl = playbackRateToggle.parentElement;
+speedControl.addEventListener("mouseenter", () => setPlaybackRateMenuOpen(true));
+speedControl.addEventListener("mouseleave", () => setPlaybackRateMenuOpen(false));
 
 playbackRateOptions.forEach((option, index) => {
 	option.onclick = () => {
 		setPlaybackRate(Number(option.dataset.rate));
-		closePlaybackRateMenu();
-		playbackRateToggle.focus();
 	};
 	option.onkeydown = (event) => {
 		if (event.key === "ArrowDown" || event.key === "ArrowUp") {
@@ -662,7 +659,7 @@ playbackRateOptions.forEach((option, index) => {
 			playbackRateOptions[(index + offset + playbackRateOptions.length) % playbackRateOptions.length].focus();
 		}
 		if (event.key === "Escape") {
-			closePlaybackRateMenu();
+			setPlaybackRateMenuOpen(false);
 			playbackRateToggle.focus();
 		}
 	};
@@ -672,16 +669,11 @@ playbackRateToggle.onkeydown = (event) => {
 	if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
 		event.preventDefault();
 		event.stopPropagation();
-		if (playbackRateMenu.hidden) {
-			playbackRateMenu.hidden = false;
-			playbackRateToggle.setAttribute("aria-expanded", "true");
-		}
+		setPlaybackRateMenuOpen(true);
 		if (event.key === "ArrowDown") playbackRateOptions[0].focus();
 	}
-	if (event.key === "Escape") closePlaybackRateMenu();
+	if (event.key === "Escape") setPlaybackRateMenuOpen(false);
 };
-
-document.addEventListener("click", closePlaybackRateMenu);
 
 muteToggle.onclick = toggleMute;
 
@@ -693,7 +685,7 @@ volume.oninput = () => {
 	showVolumeValue();
 };
 
-volume.addEventListener(
+volumeControl.addEventListener(
 	"wheel",
 	(event) => {
 		event.preventDefault();
@@ -703,24 +695,17 @@ volume.addEventListener(
 );
 
 function showVolumeValue() {
+	// 非悬停状态下（如键盘调音量）顺带把弹层点亮 1.2s
+	volumePopup.classList.add("is-visible");
 	volumeValue.classList.add("is-visible");
-	if (volumeHovering) return;
 	clearTimeout(volumeBubbleTimer);
 	volumeBubbleTimer = setTimeout(() => {
+		volumePopup.classList.remove("is-visible");
 		volumeValue.classList.remove("is-visible");
-	}, 1200);
+	}, 600);
 }
 
-volume.addEventListener("mouseenter", () => {
-	volumeHovering = true;
-	clearTimeout(volumeBubbleTimer);
-	volumeValue.classList.add("is-visible");
-});
-
-volume.addEventListener("mouseleave", () => {
-	volumeHovering = false;
-	volumeValue.classList.remove("is-visible");
-});
+// 弹层的 hover 显隐由 CSS(.volume-control:hover)处理，这里只负责非悬停时的短暂点亮
 
 function seekBy(seconds) {
 	if (!Number.isFinite(audio.duration)) return;
@@ -742,7 +727,7 @@ function changeVolumeBy(delta) {
 }
 
 document.addEventListener("keydown", (event) => {
-	if (!playbackRateMenu.hidden) return;
+	if (playbackRateMenu.classList.contains("is-visible")) return;
 	if (
 		event.target instanceof Element &&
 		event.target.closest("#playback-rate-menu")

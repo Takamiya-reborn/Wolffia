@@ -11,10 +11,9 @@
     display: block;
 }
 
-.speed-toggle[aria-expanded="true"] {
-    border-color: rgba(169, 201, 160, 0.5);
-    background: var(--accent-soft);
-    color: var(--text-strong);
+/* 倍速为非默认值时，图标高亮为主题色（与循环模式一致） */
+.speed-toggle.is-active {
+    color: var(--accent);
 }
 
 .speed-toggle:focus-visible,
@@ -43,8 +42,31 @@
     color: var(--accent);
 }
 
-.speed-toggle[aria-expanded="true"] .speed-chevron {
-    transform: rotate(180deg);
+/* 倍速弹层：hover 图标时向上展开，不占用控制栏空间，行为与音量弹层一致 */
+.speed-menu {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(4px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+/* 弥补图标与弹层之间的空隙，避免 hover 移动过程中弹层闪烁消失 */
+.speed-menu::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: -4px;
+    right: -4px;
+    height: 10px;
+}
+
+/* 仅键盘聚焦（Tab）时保持展开 */
+.speed-control:hover .speed-menu,
+.speed-control:has(.speed-toggle:focus-visible) .speed-menu,
+.speed-menu.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
 }
 
 .icon-button .icon-muted {
@@ -83,28 +105,91 @@
     color: var(--accent);
 }
 
-.volume-bubble {
+/* 音量弹层：hover 图标时向上展开，不占用控制栏空间；
+   固定宽度，保证上方的百分比提示框（同宽）容得下 "100%" 不外溢 */
+.volume-popup {
     position: absolute;
-    bottom: calc(100% + 10px);
+    width: 48px;
+    bottom: calc(100% + 6px);
     left: 50%;
-    transform: translateX(-50%);
-    padding: 3px 8px;
+    transform: translateX(-50%) translateY(4px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 8px 11px;
     border: 1px solid rgba(215, 221, 214, 0.14);
-    border-radius: 999px;
+    border-radius: 10px;
     background: rgba(29, 36, 30, 0.98);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
-    color: var(--muted);
-    font-size: 11px;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.04em;
-    white-space: nowrap;
-    pointer-events: none;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
     opacity: 0;
-    transition: opacity 0.15s ease;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 6;
 }
 
-.volume-bubble.is-visible {
+/* 弥补图标与弹层之间的空隙，避免 hover 移动过程中弹层闪烁消失 */
+.volume-popup::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: -4px;
+    right: -4px;
+    height: 8px;
+}
+
+.volume-control:hover .volume-popup,
+/* 仅键盘聚焦（Tab）时保持展开；鼠标拖完滑块留下的焦点不算，否则弹层永不消失 */
+.volume-control:has(.volume:focus-visible) .volume-popup,
+.volume-popup.is-visible {
     opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* 百分比默认不显示，只在调整音量后短暂出现；
+   绝对定位悬浮在弹层上方（Windows 音量提示样式），不撑开弹层布局，
+   左右各外扩 1px 边框宽度，使外缘宽度与弹层一致 */
+.volume-popup-value {
+    position: absolute;
+    right: -1px;
+    bottom: calc(100% + 4px);
+    left: -1px;
+    display: none;
+    padding: 3px 8px;
+    border: 1px solid rgba(215, 221, 214, 0.14);
+    border-radius: 6px;
+    background: rgba(29, 36, 30, 0.98);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+    font-size: 11px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    text-align: center;
+    color: var(--muted);
+}
+
+.volume-popup-value.is-visible {
+    display: block;
+}
+
+.volume-popup-slider {
+    position: relative;
+    width: 18px;
+    height: 84px;
+}
+
+/* 横向滑块旋转 -90° 变为竖向：最小值在底部，向上拖动增大。
+   用绝对定位把旋转中心钉在容器中心，grid 隐式轨道会被加宽的 input 撑偏 */
+.volume-popup-slider .volume {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: block;
+    width: 84px;
+    height: 16px;
+    margin: -8px 0 0 -42px;
+    transform: rotate(-90deg);
 }
 
 .volume::-webkit-slider-runnable-track {
