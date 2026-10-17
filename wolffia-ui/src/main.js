@@ -518,6 +518,11 @@ function playNext() {
 			}
 			break;
 
+		case 'one':
+			// 单曲循环：重新播放当前这首
+			playSong(currentIdx);
+			break;
+
 		case 'random': {
 			// 随机播放：按洗牌队列顺序播放，一轮播完后重新洗牌，
 			// 避免纯随机抽取导致总在几首歌之间来回跳
@@ -529,7 +534,7 @@ function playNext() {
 }
 
 function updateLoopModeUI() {
-	loopModeToggle.classList.remove('is-once', 'is-looping', 'is-random');
+	loopModeToggle.classList.remove('is-once', 'is-looping', 'is-one', 'is-random');
 	switch (loopMode) {
 		case 'once':
 			loopModeToggle.classList.add('is-once');
@@ -541,6 +546,11 @@ function updateLoopModeUI() {
 			loopModeToggle.setAttribute('aria-label', '循环播放');
 			loopModeToggle.title = '循环播放';
 			break;
+		case 'one':
+			loopModeToggle.classList.add('is-one');
+			loopModeToggle.setAttribute('aria-label', '单曲循环');
+			loopModeToggle.title = '单曲循环';
+			break;
 		case 'random':
 			loopModeToggle.classList.add('is-random');
 			loopModeToggle.setAttribute('aria-label', '随机播放');
@@ -550,10 +560,12 @@ function updateLoopModeUI() {
 }
 
 loopModeToggle.onclick = () => {
-	// 按照 once -> loop -> random -> once 的顺序切换
+	// 按照 once -> loop -> one -> random -> once 的顺序切换
 	if (loopMode === 'once') {
 		loopMode = 'loop';
 	} else if (loopMode === 'loop') {
+		loopMode = 'one';
+	} else if (loopMode === 'one') {
 		loopMode = 'random';
 	} else {
 		loopMode = 'once';

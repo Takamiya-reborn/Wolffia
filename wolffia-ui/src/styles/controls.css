@@ -60,21 +60,25 @@
 }
 
 .loop-mode-toggle .icon-loop,
+.loop-mode-toggle .icon-one,
 .loop-mode-toggle .icon-random {
     display: none;
 }
 
 .loop-mode-toggle.is-looping .icon-once,
+.loop-mode-toggle.is-one .icon-once,
 .loop-mode-toggle.is-random .icon-once {
     display: none;
 }
 
 .loop-mode-toggle.is-looping .icon-loop,
+.loop-mode-toggle.is-one .icon-one,
 .loop-mode-toggle.is-random .icon-random {
     display: block;
 }
 
 .loop-mode-toggle.is-looping,
+.loop-mode-toggle.is-one,
 .loop-mode-toggle.is-random {
     color: var(--accent);
 }
