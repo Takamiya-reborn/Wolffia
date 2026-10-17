@@ -21,6 +21,15 @@ export function createLyricsController({ wrapper, container }) {
 		elements = [];
 		activeIndex = -1;
 		wrapper.innerHTML = "";
+		if (!lyrics.length) {
+			const empty = document.createElement("div");
+			empty.className = "lrc-line lrc-empty px-0 py-[9px] text-[clamp(17px,2vw,21px)] leading-[1.45] text-[#68726c] transition-[color,font-size,opacity] duration-300 ease-in-out";
+			empty.innerText = "暂无歌词";
+			wrapper.appendChild(empty);
+			elements.push(empty);
+			requestAnimationFrame(() => center(0));
+			return;
+		}
 		lyrics.forEach(({ text }) => {
 			const line = document.createElement("div");
 			line.className = "lrc-line px-0 py-[9px] text-[clamp(17px,2vw,21px)] leading-[1.45] text-[#68726c] transition-[color,font-size,opacity] duration-300 ease-in-out";
