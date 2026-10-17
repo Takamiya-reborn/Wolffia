@@ -198,14 +198,17 @@
     background: linear-gradient(to right, var(--accent) 0 var(--volume, 100%), rgba(215, 221, 214, 0.13) var(--volume, 100%) 100%);
 }
 
+/* 音量滑条不显示圆形滑块（把手），只保留轨道填充。
+   注意不能对 thumb 用 display:none——Chromium 里滑块会被一并移出
+   命中测试，滑条从此拖不动；改为透明占位，保留可交互区域 */
 .volume::-webkit-slider-thumb {
     width: 10px;
     height: 10px;
     margin-top: -3.5px;
     appearance: none;
-    border: 2px solid var(--accent);
+    border: 0;
     border-radius: 50%;
-    background: #172017;
+    background: transparent;
 }
 
 .volume::-moz-range-track {
@@ -223,9 +226,9 @@
 .volume::-moz-range-thumb {
     width: 7px;
     height: 7px;
-    border: 2px solid var(--accent);
+    border: 0;
     border-radius: 50%;
-    background: #172017;
+    background: transparent;
 }
 
 .progress {

@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "pillow>=11.3.0",
     "pyinstaller>=6.22.3",
     "pywebview>=6.2.1",
     "tinytag>=2.3.2",
@@ -19,6 +20,10 @@ wolffia = "wolffia:main"
 [build-system]
 requires = ["uv_build>=0.12.10,<0.13.0"]
 build-backend = "uv_build"
+
+[[tool.uv.index]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
 
 [dependency-groups]
 dev = [

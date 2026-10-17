@@ -11,6 +11,27 @@ _WINDOW_TITLE = "Wolffia"
 MIN_WINDOW_WIDTH = 640
 MIN_WINDOW_HEIGHT = 480
 
+# WebView2 启动参数：压缩引擎常驻开销。
+# 单页面播放器用不到的引擎特性全部关闭：
+# - BackForwardCache：前进后退缓存会在内存里保留页面快照
+# - AudioServiceOutOfProcess：音频服务并回浏览器进程，少一个常驻进程
+# - Translate/背景联网/组件更新：本地工具无需任何后台网络活动
+# - renderer-process-limit：限制渲染进程数量
+# 用户已自行设置该环境变量时不覆盖
+_BROWSER_ARGUMENTS = (
+    "--renderer-process-limit=1 "
+    "--disable-features=BackForwardCache,AudioServiceOutOfProcess,Translate "
+    "--disable-background-networking "
+    "--disable-component-update "
+    "--disable-default-apps"
+)
+
+
+def _apply_browser_arguments():
+    if os.environ.get("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"):
+        return
+    os.environ["WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"] = _BROWSER_ARGUMENTS
+
 
 def get_asset_path(filename):
     if getattr(sys, "frozen", False) or "__compiled__" in globals():
@@ -60,6 +81,7 @@ class PlayerWindow:
 
         self._application_mutex = mutex
         api = PlayerApi()
+        _apply_browser_arguments()
         try:
             webview.create_window(
                 _WINDOW_TITLE,

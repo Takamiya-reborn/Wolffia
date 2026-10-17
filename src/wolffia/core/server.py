@@ -4,6 +4,13 @@ import re
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+# wfile 是无缓冲写，每个分块一次 send 系统调用。
+# 8KB 意味着一首歌上千次 Python 层循环；加大到 256KB 后
+# 传输期间基本处于系统调用空闲状态（拖动进度条时尤其明显）
+SEND_CHUNK_SIZE = 256 * 1024
+
+_RANGE_PATTERN = re.compile(r"bytes=(\d+)-(\d*)")
+
 
 class RangeHandler(BaseHTTPRequestHandler):
     def log_message(self, *args):
@@ -30,20 +37,26 @@ class RangeHandler(BaseHTTPRequestHandler):
 
         start, end = 0, size - 1
         if range_header:
-            match = re.search(r"bytes=(\d+)-(\d*)", range_header)
+            match = _RANGE_PATTERN.search(range_header)
             if not match:
                 self.send_error(416)
                 return
             start = int(match.group(1))
             end = int(match.group(2)) if match.group(2) else end
-            if start > end:
-                self.send_error(416)
-                return
             # 播放器对时长估算偏长（如缺 Xing 头的 VBR MP3）时，
             # seek 到末尾可能请求超出文件末尾的字节；此时返回 416 会让
-            # 音频元素进入错误态（此后 seek 全部失效），按最后一个字节处理
+            # 音频元素进入错误态（此后 seek 全部失效），按最后一个字节处理。
+            # 此分支必须先于 start > end 判断：start 越界时 end 仍是 size-1，
+            # 越界请求必然满足 start > end，先判会永远到不了这里的兜底
             if start >= size:
-                start = end = max(size - 1, 0)
+                if size == 0:
+                    # 空文件没有任何可满足的字节，Range 一律 416
+                    self.send_error(416)
+                    return
+                start = end = size - 1
+            elif start > end:
+                self.send_error(416)
+                return
             else:
                 end = min(end, size - 1)
 
@@ -74,7 +87,7 @@ class RangeHandler(BaseHTTPRequestHandler):
                 f.seek(start)
                 remaining = chunk_size
                 while remaining > 0:
-                    buffer = f.read(min(8192, remaining))
+                    buffer = f.read(min(SEND_CHUNK_SIZE, remaining))
                     if not buffer:
                         break
                     self.wfile.write(buffer)

@@ -1,5 +1,6 @@
 import base64
 import ctypes
+import io
 import os
 import subprocess
 import sys
@@ -12,6 +13,13 @@ import webview
 
 # 仅处理常见内嵌封面格式
 _ALBUM_ART_SUFFIXES = {".mp3", ".flac", ".m4a"}
+
+# 内嵌封面降采样的目标边长：歌词背景是两层大半径 blur，专辑图模式全屏展示，
+# 边长 1024 足够覆盖窗口尺寸；一些 FLAC 内嵌 3000px+ 的封面，
+# 解码位图可达数十 MB，全尺寸塞给 webview（base64 字符串 + 解码位图 × 模糊层）
+# 是播放器最大的内存波动来源
+_ALBUM_ART_MAX_EDGE = 1024
+_ALBUM_ART_JPEG_QUALITY = 85
 
 
 class ApplicationMutex:
@@ -130,6 +138,30 @@ def _sniff_image_mime(data):
     return None
 
 
+def _downscale_album_art(data):
+    """把内嵌封面降采样到目标边长内的 JPEG，减小 webview 侧的解码与内存开销。
+
+    已经足够小或解码失败时返回 None（调用方回退到原始数据）。
+    """
+    try:
+        from PIL import Image
+    except ImportError:
+        return None
+
+    try:
+        with Image.open(io.BytesIO(data)) as img:
+            if max(img.width, img.height) <= _ALBUM_ART_MAX_EDGE:
+                return None
+            img = img.convert("RGB")
+            img.thumbnail((_ALBUM_ART_MAX_EDGE, _ALBUM_ART_MAX_EDGE))
+            buffer = io.BytesIO()
+            img.save(buffer, "JPEG", quality=_ALBUM_ART_JPEG_QUALITY)
+            return buffer.getvalue()
+    except Exception:
+        # 封面数据异常时直接用原图，宁可内存多占也不丢封面
+        return None
+
+
 def extract_album_art(song_path):
     """提取内嵌专辑图并返回 data URI，无图或解析失败返回 None"""
     if song_path.suffix.lower() not in _ALBUM_ART_SUFFIXES:
@@ -144,10 +176,11 @@ def extract_album_art(song_path):
     if not image or not image.data:
         return None
 
-    mime = _sniff_image_mime(image.data) or image.mime_type
+    data = _downscale_album_art(image.data) or image.data
+    mime = _sniff_image_mime(data) or image.mime_type
     if not mime:
         return None
-    encoded = base64.b64encode(image.data).decode("ascii")
+    encoded = base64.b64encode(data).decode("ascii")
     return f"data:{mime};base64,{encoded}"
 
 
