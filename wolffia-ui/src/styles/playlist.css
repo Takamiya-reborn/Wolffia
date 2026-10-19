@@ -3,6 +3,28 @@
 /* 列表宽度：默认占视口 20%，由拖拽手柄在 20%–50% 之间调整 */
 #list {
 	flex: 0 0 var(--list-width, 20vw);
+	transition: flex-basis 0.2s ease;
+}
+
+/* 收起状态：宽度归零并隐藏拖拽手柄，flex-basis 过渡产生收合动画 */
+body.is-list-collapsed #list {
+	flex-basis: 0;
+	border-right-width: 0;
+}
+
+body.is-list-collapsed #list-resizer {
+	display: none;
+}
+
+/* 拖拽手柄时禁用过渡，否则列表会以缓动追赶光标，跟不上拖动 */
+body.is-resizing-list #list {
+	transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#list {
+		transition: none;
+	}
 }
 
 /* VSCode 侧边栏式拖拽手柄：悬停/拖动时高亮。

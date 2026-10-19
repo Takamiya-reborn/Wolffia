@@ -72,6 +72,12 @@
 	right: 20px;
 }
 
+/* 列表收起按钮复用同一外观，悬浮在歌词区左上角 */
+.list-collapse-toggle {
+	right: auto;
+	left: 20px;
+}
+
 #lyrics-art-toggle .icon-image-off {
 	display: none;
 }
@@ -102,6 +108,15 @@
 	background: rgba(169, 201, 160, 0.18);
 	color: var(--text-strong);
 	opacity: 1;
+}
+
+/* 列表收起与否用户肉眼可见，按钮不做变色状态；
+   仅保留悬停反馈，按住 aria-pressed 供读屏使用 */
+.list-collapse-toggle[aria-pressed="true"] {
+	border-color: rgba(215, 221, 214, 0.16);
+	background: rgba(18, 23, 18, 0.42);
+	color: var(--muted);
+	opacity: 0.78;
 }
 
 .lyrics-art-toggle:focus-visible {

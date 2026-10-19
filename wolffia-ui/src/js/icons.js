@@ -19,6 +19,7 @@ import {
 	PinOff,
 	Maximize,
 	Minimize,
+	PanelLeft,
 	createIcons,
 } from "lucide";
 
@@ -44,6 +45,7 @@ export const lucideIcons = {
 	PinOff,
 	Maximize,
 	Minimize,
+	PanelLeft,
 };
 
 export function refreshIcons(root = document) {

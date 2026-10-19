@@ -23,14 +23,16 @@
             aria-hidden="true"
           ></i>
           <h1
+            id="playlist-name"
             class="m-0 min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-[16px] font-semibold leading-[1.4] tracking-[-0.01em] text-(--text-strong)"
+            title="播放列表"
           >
             播放列表
           </h1>
           <span
             id="playlist-count"
             class="shrink-0 rounded-full bg-[rgba(215,221,214,0.07)] px-2 py-0.75 text-[13px] font-medium leading-none tracking-[0.04em] text-(--faint) tabular-nums"
-            >0 首</span
+            >0</span
           >
         </header>
         <div id="songs" class="min-h-0 flex-1 overflow-y-auto pb-3"></div>
@@ -96,6 +98,16 @@
           >
             暂无专辑图
           </div>
+          <button
+            id="list-collapse-toggle"
+            class="lyrics-art-toggle list-collapse-toggle"
+            type="button"
+            aria-pressed="false"
+            aria-label="收起播放列表"
+            title="收起播放列表"
+          >
+            <i data-lucide="panel-left" aria-hidden="true"></i>
+          </button>
           <button
             id="lyrics-art-toggle"
             class="lyrics-art-toggle"

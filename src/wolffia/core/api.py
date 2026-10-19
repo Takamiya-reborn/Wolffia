@@ -375,6 +375,9 @@ class PlayerApi:
         )
         self._static_server_thread.start()
         scan_result["port"] = self._static_server.server_address[1]
+        # 目录名给侧栏标题显示，类似 VSCode 打开目录的效果
+        scan_result["name"] = self._music_root.name
+        scan_result["folder"] = str(self._music_root)
         return scan_result
 
     def get_lyrics(self, relative_path):

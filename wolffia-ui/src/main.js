@@ -33,8 +33,8 @@ let shuffleQueue = [];
 let artworkMode = false;
 let videoMode = false;
 
-const { media, list, listResizer, volume, volumeValue, volumeControl, volumePopup, duration, progress, lyricsBg, lyricsArea, lyricsArtToggle, pinToggle, fullscreenToggle,
-	lyricsWrapper: wrapper, lyricsContainer, playToggle, muteToggle, currentTime, playlist, playlistCount,
+const { media, list, listResizer, listCollapseToggle, volume, volumeValue, volumeControl, volumePopup, duration, progress, lyricsBg, lyricsArea, lyricsArtToggle, pinToggle, fullscreenToggle,
+	lyricsWrapper: wrapper, lyricsContainer, playToggle, muteToggle, currentTime, playlist, playlistCount, playlistName,
 	loopModeToggle, songContextMenu, titleContextMenu, playbackRateMenu,
 	playbackRateToggle, playbackRateOptions, playerHeader, currentTitle, titleText } = dom;
 const lyrics = createLyricsController({ wrapper, container: lyricsContainer });
@@ -127,6 +127,24 @@ let endedWhileDragging = false;
 let consecutiveErrors = 0;
 let volumeBubbleTimer = 0;
 let listResizing = false;
+let listCollapsed = false;
+
+// —— 播放列表收起/展开——
+function setListCollapsed(collapsed) {
+	listCollapsed = collapsed;
+	document.body.classList.toggle("is-list-collapsed", collapsed);
+	listCollapseToggle.setAttribute("aria-pressed", String(collapsed));
+	listCollapseToggle.setAttribute(
+		"aria-label",
+		collapsed ? "展开播放列表" : "收起播放列表",
+	);
+	listCollapseToggle.title = collapsed ? "展开播放列表" : "收起播放列表";
+	// 宽度有过渡动画，结束时再测量标题是否溢出，避免按中间态误判
+	setTimeout(updateTitleMarquee, 250);
+}
+
+listCollapseToggle.onclick = () => setListCollapsed(!listCollapsed);
+
 
 function setTitle(text) {
 	titleText.innerText = text;
@@ -268,7 +286,7 @@ function initData(songsData, port) {
 		node.songs.push({ song, index });
 	});
 	renderTree(root, container);
-	playlistCount.innerText = `${songs.length} 首`;
+	playlistCount.innerText = String(songs.length);
 }
 
 function renderTree(node, container, parentPath = "") {
@@ -453,6 +471,9 @@ lyricsArea.ondblclick = async (event) => {
 			lyricsBg.classList.remove("is-visible");
 			lyricsBg.style.backgroundImage = "";
 			initData(result.songs, result.port);
+			// 侧栏标题显示所选目录名（VSCode 风格），悬停可看完整路径
+			playlistName.innerText = result.name || "播放列表";
+			playlistName.title = result.folder || result.name || "播放列表";
 			setTitle("请选择歌曲");
 			playerHeader.classList.remove("has-song");
 		} else {
@@ -831,8 +852,9 @@ media.onplay = updatePlayerState;
 media.onpause = updatePlayerState;
 
 window.addEventListener("resize", () => {
-	// 拖宽列表后再缩小窗口时，把宽度收回可用范围内
-	setListWidth(list.getBoundingClientRect().width);
+	// 拖宽列表后再缩小窗口时，把宽度收回可用范围内；
+	// 收起状态下 rect 宽度为 0，回写会丢掉原宽度，跳过
+	if (!listCollapsed) setListWidth(list.getBoundingClientRect().width);
 	updateTitleMarquee();
 	if (currentIdx >= 0) {
 		const activeLine = wrapper.querySelector(".lrc-active");
