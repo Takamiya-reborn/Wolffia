@@ -45,7 +45,7 @@
 .lyrics-art-toggle {
 	position: absolute;
 	top: 16px;
-	right: 20px;
+	right: 62px;
 	z-index: 2;
 	display: grid;
 	width: 34px;
@@ -67,9 +67,9 @@
 	height: 16px;
 }
 
-/* pin 按钮复用 lyrics-art-toggle 的外观，排在专辑图开关左侧 */
+/* pin 按钮复用 lyrics-art-toggle 的外观，排在专辑图开关右侧 */
 .window-pin-toggle {
-	right: 62px;
+	right: 20px;
 }
 
 #lyrics-art-toggle .icon-image-off {
@@ -133,4 +133,31 @@
 	font-size: clamp(22px, 2.5vw, 30px) !important;
 	font-weight: 600 !important;
 	text-shadow: 0 0 12px rgba(169, 201, 160, 0.18);
+}
+
+/* 视频画面层：默认隐藏，播放视频时铺满歌词区，object-fit 保证任意比例不变形 */
+#media {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	display: none;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	background: #000;
+}
+
+#lyrics-area.is-video-mode #media {
+	display: block;
+}
+
+#lyrics-area.is-video-mode #lyrics-bg,
+#lyrics-area.is-video-mode #lyrics-container,
+#lyrics-area.is-video-mode .lyrics-art-empty {
+	visibility: hidden;
+}
+
+/* 专辑图开关在视频模式下无意义，隐藏；置顶按钮保留 */
+#lyrics-area.is-video-mode #lyrics-art-toggle {
+	display: none;
 }

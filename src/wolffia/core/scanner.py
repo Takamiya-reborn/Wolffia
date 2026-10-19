@@ -70,10 +70,15 @@ def _find_lyrics(audio_path):
 
 
 def scan_folder(folder_path):
-    """Scan audio metadata without reading lyric contents."""
+    """Scan audio/video metadata without reading lyric contents."""
     songs = []
     errors = []
-    extensions = (".mp3", ".flac", ".wav", ".m4a")
+    # 视频由 WebView2 (Chromium) 解码：mp4/webm 原生支持，
+    # mkv/mov 取决于内置编解码器，不支持时前端 onerror 会自动跳歌
+    extensions = (
+        ".mp3", ".flac", ".wav", ".m4a",
+        ".mp4", ".m4v", ".webm", ".mkv", ".mov",
+    )
     root = Path(folder_path)
     try:
         audio_files = sorted(

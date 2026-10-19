@@ -277,3 +277,23 @@
     border-radius: 50%;
     background: #172017;
 }
+
+/* 视频全屏按钮：只对视频开放（JS 按 is-video-mode 切 disabled），
+   禁用时压暗并关掉命中测试，避免 hover 高亮误导为可点 */
+#fullscreen-toggle:disabled {
+    opacity: 0.32;
+    cursor: default;
+    pointer-events: none;
+}
+
+#fullscreen-toggle .icon-minimize {
+    display: none;
+}
+
+#fullscreen-toggle[aria-pressed="true"] .icon-maximize {
+    display: none;
+}
+
+#fullscreen-toggle[aria-pressed="true"] .icon-minimize {
+    display: block;
+}

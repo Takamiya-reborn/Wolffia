@@ -1,6 +1,6 @@
 // 集中管理页面 DOM 引用，避免业务代码反复查询元素。
 export const dom = {
-	audio: document.getElementById("audio"),
+	media: document.getElementById("media"),
 	list: document.getElementById("list"),
 	listResizer: document.getElementById("list-resizer"),
 	volume: document.getElementById("volume"),
@@ -14,6 +14,7 @@ export const dom = {
 	lyricsArtEmpty: document.getElementById("lyrics-art-empty"),
 	lyricsArtToggle: document.getElementById("lyrics-art-toggle"),
 	pinToggle: document.getElementById("window-pin-toggle"),
+	fullscreenToggle: document.getElementById("fullscreen-toggle"),
 	lyricsWrapper: document.getElementById("lyrics-wrapper"),
 	lyricsContainer: document.getElementById("lyrics-container"),
 	playToggle: document.getElementById("play-toggle"),

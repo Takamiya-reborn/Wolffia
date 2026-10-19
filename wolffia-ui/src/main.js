@@ -12,6 +12,9 @@ const LIST_MIN_RATIO = 0.2;
 const LIST_MAX_RATIO = 0.5;
 const LIST_RESIZE_STEP = 16;
 const ALBUM_ART_EXTENSIONS = new Set(["mp3", "flac", "m4a"]);
+// 视频由 WebView2 (Chromium) 解码：mp4/webm 原生支持，
+// mkv/mov 取决于内置编解码器，不支持时走 onerror 自动跳歌
+const VIDEO_EXTENSIONS = new Set(["mp4", "m4v", "webm", "mkv", "mov"]);
 
 let songs = [];
 let loopMode = "once";
@@ -28,8 +31,9 @@ let contextMenuPath = null;
 let shuffleDir = null;
 let shuffleQueue = [];
 let artworkMode = false;
+let videoMode = false;
 
-const { audio, list, listResizer, volume, volumeValue, volumeControl, volumePopup, duration, progress, lyricsBg, lyricsArea, lyricsArtToggle, pinToggle,
+const { media, list, listResizer, volume, volumeValue, volumeControl, volumePopup, duration, progress, lyricsBg, lyricsArea, lyricsArtToggle, pinToggle, fullscreenToggle,
 	lyricsWrapper: wrapper, lyricsContainer, playToggle, muteToggle, currentTime, playlist, playlistCount,
 	loopModeToggle, songContextMenu, titleContextMenu, playbackRateMenu,
 	playbackRateToggle, playbackRateOptions, playerHeader, currentTitle, titleText } = dom;
@@ -46,6 +50,52 @@ function setArtworkMode(enabled) {
 lyricsArtToggle.onclick = () => {
 	setArtworkMode(!artworkMode);
 };
+
+function isVideoPath(path) {
+	const ext = path.substring(path.lastIndexOf(".") + 1).toLowerCase();
+	return VIDEO_EXTENSIONS.has(ext);
+}
+
+function setVideoMode(enabled) {
+	videoMode = enabled;
+	lyricsArea.classList.toggle("is-video-mode", enabled);
+	// 全屏入口只对视频开放，音乐与空状态时禁用；
+	// 歌单自动切到音乐时顺带退出全屏，避免黑屏全屏残留
+	fullscreenToggle.disabled = !enabled;
+	if (!enabled && document.fullscreenElement) document.exitFullscreen();
+}
+
+// —— 视频全屏——
+// 直接对 video 元素请求全屏：其余 UI 全部不渲染，画面原生铺满整块屏幕；
+// 控制栏随之消失，点画面、按 Esc 或 F 退出
+function toggleFullscreen() {
+	if (document.fullscreenElement) {
+		document.exitFullscreen();
+	} else {
+		media.requestFullscreen().catch(() => { });
+	}
+}
+
+fullscreenToggle.onclick = toggleFullscreen;
+
+// 全屏时整个 UI 都不在画面上了，点视频即退出
+media.onclick = () => {
+	if (document.fullscreenElement === media) document.exitFullscreen();
+};
+
+document.addEventListener("fullscreenchange", () => {
+	const fullscreen = Boolean(document.fullscreenElement);
+	fullscreenToggle.setAttribute("aria-pressed", String(fullscreen));
+	fullscreenToggle.setAttribute("aria-label", fullscreen ? "退出全屏 (F)" : "全屏 (F)");
+	fullscreenToggle.title = fullscreen ? "退出全屏 (F)" : "全屏 (F)";
+	// 元素全屏只覆盖 WebView2 控件区域，无边框全屏由后端同步切换原生窗口；
+	// Esc 退出时也走这里，保证两层全屏状态一致
+	try {
+		window.pywebview.api.set_native_fullscreen(fullscreen).catch(() => { });
+	} catch {
+		// 后端未就绪时退化为仅 WebView 内全屏
+	}
+});
 
 // —— 窗口置顶——
 let alwaysOnTop = false;
@@ -157,31 +207,31 @@ listResizer.addEventListener("keydown", (event) => {
 });
 
 function updatePlayerState() {
-	const hasDuration = Number.isFinite(audio.duration) && audio.duration > 0;
+	const hasDuration = Number.isFinite(media.duration) && media.duration > 0;
 	if (progressDragging) {
-		// 拖动中：进度、时间跟随滑块，不回写 audio 的滞后状态
+		// 拖动中：进度、时间跟随滑块，不回写 media 的滞后状态
 		const sliderValue = Number(progress.value);
 		progress.style.setProperty("--progress", `${sliderValue}%`);
 		currentTime.innerText = formatTime(
-			hasDuration ? (sliderValue / 100) * audio.duration : 0,
+			hasDuration ? (sliderValue / 100) * media.duration : 0,
 		);
 	} else {
-		const percentage = hasDuration ? (audio.currentTime / audio.duration) * 100 : 0;
+		const percentage = hasDuration ? (media.currentTime / media.duration) * 100 : 0;
 		progress.value = percentage;
 		progress.style.setProperty("--progress", `${percentage}%`);
-		currentTime.innerText = formatTime(audio.currentTime);
+		currentTime.innerText = formatTime(media.currentTime);
 	}
-	duration.innerText = formatTime(audio.duration);
-	const isPlaying = !audio.paused;
+	duration.innerText = formatTime(media.duration);
+	const isPlaying = !media.paused;
 	playerHeader.classList.toggle("is-playing", isPlaying);
 	playToggle.classList.toggle("is-playing", isPlaying);
 	playToggle.setAttribute("aria-label", isPlaying ? "暂停" : "播放");
 	playToggle.title = isPlaying ? "暂停 (空格)" : "播放 (空格)";
-	const volumePercentage = audio.muted ? 0 : audio.volume * 100;
+	const volumePercentage = media.muted ? 0 : media.volume * 100;
 	volume.value = volumePercentage / 100;
 	volume.style.setProperty("--volume", `${volumePercentage}%`);
 	volumeValue.innerText = `${Math.round(volumePercentage)}%`;
-	const isMuted = audio.muted || audio.volume === 0;
+	const isMuted = media.muted || media.volume === 0;
 	muteToggle.classList.toggle("is-muted", isMuted);
 	muteToggle.setAttribute("aria-label", isMuted ? "取消静音" : "静音");
 	muteToggle.setAttribute("aria-pressed", isMuted);
@@ -393,9 +443,10 @@ lyricsArea.ondblclick = async (event) => {
 		if (result) {
 			directoryVersion += 1;
 			currentIdx = -1;
-			audio.pause();
-			audio.removeAttribute("src");
-			audio.load();
+			media.pause();
+			media.removeAttribute("src");
+			media.load();
+			setVideoMode(false);
 			lyrics.render([]);
 			lyricsArea.classList.add("is-no-art");
 			setArtworkMode(artworkMode);
@@ -425,8 +476,10 @@ async function playSong(idx) {
 	setTitle(songs[idx].name);
 	playerHeader.classList.add("has-song");
 
-	audio.src = `http://127.0.0.1:${serverPort}/${encodeURIComponent(songs[idx].path)}`;
-	audio.play().catch(() => {
+	// 视频模式与歌词/专辑图互斥，画面层显隐由 CSS 按 is-video-mode 切换
+	setVideoMode(isVideoPath(songs[idx].path));
+	media.src = `http://127.0.0.1:${serverPort}/${encodeURIComponent(songs[idx].path)}`;
+	media.play().catch(() => {
 		// 快速切歌时上一个 play() 可能被新的加载中断（AbortError），忽略即可
 	});
 
@@ -503,7 +556,7 @@ function playNext() {
 			} else {
 				// 如果是最后一首，回到第一首但立即暂停
 				playSong(directorySongs[0]);
-				audio.pause();
+				media.pause();
 			}
 			break;
 
@@ -575,29 +628,29 @@ loopModeToggle.onclick = () => {
 updateLoopModeUI();
 refreshIcons();
 
-audio.ontimeupdate = () => {
+media.ontimeupdate = () => {
 	updatePlayerState();
 	// 拖动中歌词跟随滑块位置（oninput 已更新），timeupdate 不回写，
 	// 否则高亮行在实际播放位置与拖动位置之间来回跳跃
-	if (!progressDragging) lyrics.update(audio.currentTime);
+	if (!progressDragging) lyrics.update(media.currentTime);
 };
 
 function togglePlay() {
-	if (!audio.src) return;
-	if (audio.paused) {
-		audio.play().catch(() => { });
+	if (!media.src) return;
+	if (media.paused) {
+		media.play().catch(() => { });
 	} else {
-		audio.pause();
+		media.pause();
 	}
 }
 
 function toggleMute() {
-	if (audio.muted || audio.volume === 0) {
-		audio.volume = lastVolume || 0.7;
-		audio.muted = false;
+	if (media.muted || media.volume === 0) {
+		media.volume = lastVolume || 0.7;
+		media.muted = false;
 	} else {
-		lastVolume = audio.volume;
-		audio.muted = true;
+		lastVolume = media.volume;
+		media.muted = true;
 	}
 	updatePlayerState();
 	showVolumeValue();
@@ -606,10 +659,10 @@ function toggleMute() {
 playToggle.onclick = togglePlay;
 
 progress.oninput = () => {
-	if (!Number.isFinite(audio.duration)) return;
+	if (!Number.isFinite(media.duration)) return;
 	// 拖动过程中只预览时间与歌词，不提交 seek，
 	// 避免高频 seek 造成的抖动、连跳与卡死
-	const seekTime = (Number(progress.value) / 100) * audio.duration;
+	const seekTime = (Number(progress.value) / 100) * media.duration;
 	progress.style.setProperty("--progress", `${Number(progress.value)}%`);
 	currentTime.innerText = formatTime(seekTime);
 	lyrics.update(seekTime);
@@ -617,18 +670,18 @@ progress.oninput = () => {
 
 // 松手时才提交一次真正的 seek
 progress.onchange = () => {
-	if (!Number.isFinite(audio.duration)) return;
-	audio.currentTime = (Number(progress.value) / 100) * audio.duration;
+	if (!Number.isFinite(media.duration)) return;
+	media.currentTime = (Number(progress.value) / 100) * media.duration;
 	// 歌曲在拖动期间自然播完：ended 被守卫拦下没有切歌，
 	// 从松手位置恢复播放；若松手位置已在末尾会再次触发 ended 正常切歌
 	if (endedWhileDragging) {
 		endedWhileDragging = false;
-		audio.play().catch(() => { });
+		media.play().catch(() => { });
 	}
 };
 
 function setPlaybackRate(rate) {
-	audio.playbackRate = rate;
+	media.playbackRate = rate;
 	playbackRateToggle.classList.toggle("is-active", rate !== 1);
 	playbackRateOptions.forEach((option) => {
 		const isSelected = Number(option.dataset.rate) === rate;
@@ -678,9 +731,9 @@ playbackRateToggle.onkeydown = (event) => {
 muteToggle.onclick = toggleMute;
 
 volume.oninput = () => {
-	audio.volume = Number(volume.value);
-	if (audio.volume > 0) lastVolume = audio.volume;
-	audio.muted = audio.volume === 0;
+	media.volume = Number(volume.value);
+	if (media.volume > 0) lastVolume = media.volume;
+	media.muted = media.volume === 0;
 	updatePlayerState();
 	showVolumeValue();
 };
@@ -708,20 +761,20 @@ function showVolumeValue() {
 // 弹层的 hover 显隐由 CSS(.volume-control:hover)处理，这里只负责非悬停时的短暂点亮
 
 function seekBy(seconds) {
-	if (!Number.isFinite(audio.duration)) return;
-	audio.currentTime = Math.min(
-		Math.max(audio.currentTime + seconds, 0),
-		audio.duration,
+	if (!Number.isFinite(media.duration)) return;
+	media.currentTime = Math.min(
+		Math.max(media.currentTime + seconds, 0),
+		media.duration,
 	);
 	updatePlayerState();
-	lyrics.update(audio.currentTime);
+	lyrics.update(media.currentTime);
 }
 
 function changeVolumeBy(delta) {
-	const next = Math.min(Math.max(audio.volume + delta, 0), 1);
-	audio.volume = next;
+	const next = Math.min(Math.max(media.volume + delta, 0), 1);
+	media.volume = next;
 	if (next > 0) lastVolume = next;
-	audio.muted = next === 0;
+	media.muted = next === 0;
 	updatePlayerState();
 	showVolumeValue();
 }
@@ -763,12 +816,19 @@ document.addEventListener("keydown", (event) => {
 			if (event.repeat) return;
 			toggleMute();
 			break;
+		case "f":
+		case "F":
+			// 与全屏按钮保持一致，仅视频模式下可用
+			if (event.repeat || fullscreenToggle.disabled) return;
+			event.preventDefault();
+			toggleFullscreen();
+			break;
 	}
 });
 
-audio.onloadedmetadata = updatePlayerState;
-audio.onplay = updatePlayerState;
-audio.onpause = updatePlayerState;
+media.onloadedmetadata = updatePlayerState;
+media.onplay = updatePlayerState;
+media.onpause = updatePlayerState;
 
 window.addEventListener("resize", () => {
 	// 拖宽列表后再缩小窗口时，把宽度收回可用范围内
@@ -782,7 +842,7 @@ window.addEventListener("resize", () => {
 	}
 });
 
-audio.onended = () => {
+media.onended = () => {
 	updatePlayerState();
 	// 拖动期间不切歌，否则会一边拖一边连续跳歌。
 	// 注意 seek 只在松手时提交，拖动中触发的 ended 一定是自然播完，
@@ -798,15 +858,15 @@ audio.onended = () => {
 // 出错后 currentTime 赋值也会失效（表现为拖进度条没反应），
 // 只有换 src 才能恢复。这里自动跳下一首让播放继续，
 // 连续多首失败（如服务器已停止）则由阈值兜底，避免无限切歌
-audio.onerror = () => {
-	if (!audio.error || !audio.src) return;
+media.onerror = () => {
+	if (!media.error || !media.src) return;
 	if (consecutiveErrors >= 3) return;
 	consecutiveErrors += 1;
 	playNext();
 };
 
 // 真正开始出声才算播放成功，清零连续出错计数
-audio.onplaying = () => {
+media.onplaying = () => {
 	consecutiveErrors = 0;
 };
 

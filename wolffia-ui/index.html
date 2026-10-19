@@ -15,7 +15,7 @@
         class="flex min-w-0 flex-col overflow-hidden border-r border-(--line) bg-[rgba(21,23,21,0.84)] px-0 pb-5 pt-4"
       >
         <header
-          class="flex shrink-0 items-center gap-1.5 border-b border-(--line) py-3 pr-3 pl-7.75"
+          class="flex h-11.75 shrink-0 items-center gap-1.5 border-b border-(--line) pr-3 pl-7.75"
         >
           <i
             data-lucide="list"
@@ -68,11 +68,11 @@
       ></div>
       <section
         id="player-zone"
-        class="@container flex min-w-0 flex-1 flex-col items-center px-10 pt-10.5 max-[760px]:px-5.5 max-[760px]:pt-8"
+        class="@container flex min-w-0 flex-1 flex-col items-center px-10 pt-4 max-[760px]:px-5.5"
       >
         <header
           id="player-header"
-          class="-mx-10 flex w-[calc(100%+80px)] shrink-0 self-stretch items-center justify-center gap-2.5 border-b border-(--line) px-10 pb-4 max-[760px]:-mx-5.5 max-[760px]:w-[calc(100%+44px)] max-[760px]:px-5.5"
+          class="-mx-10 flex h-11.75 w-[calc(100%+80px)] shrink-0 self-stretch items-center justify-center gap-2.5 border-b border-(--line) px-10 max-[760px]:-mx-5.5 max-[760px]:w-[calc(100%+44px)] max-[760px]:px-5.5"
         >
           <div class="eq-icon" aria-hidden="true">
             <span></span><span></span><span></span>
@@ -97,6 +97,20 @@
             暂无专辑图
           </div>
           <button
+            id="lyrics-art-toggle"
+            class="lyrics-art-toggle"
+            type="button"
+            aria-label="显示专辑图"
+            title="显示专辑图"
+          >
+            <i data-lucide="image" class="icon-image" aria-hidden="true"></i>
+            <i
+              data-lucide="image-off"
+              class="icon-image-off"
+              aria-hidden="true"
+            ></i>
+          </button>
+          <button
             id="window-pin-toggle"
             class="lyrics-art-toggle window-pin-toggle"
             type="button"
@@ -111,20 +125,6 @@
               aria-hidden="true"
             ></i>
           </button>
-          <button
-            id="lyrics-art-toggle"
-            class="lyrics-art-toggle"
-            type="button"
-            aria-label="显示专辑图"
-            title="显示专辑图"
-          >
-            <i data-lucide="image" class="icon-image" aria-hidden="true"></i>
-            <i
-              data-lucide="image-off"
-              class="icon-image-off"
-              aria-hidden="true"
-            ></i>
-          </button>
           <div
             id="lyrics-container"
             class="absolute inset-0 overflow-hidden text-center mask-[linear-gradient(transparent,black_18%,black_82%,transparent)]"
@@ -134,9 +134,10 @@
               class="absolute top-1/2 w-full px-6 transition-[top] duration-300 ease-in-out"
             ></div>
           </div>
+          <video id="media" preload="metadata" playsinline></video>
         </div>
         <div
-          class="player-controls -mx-10 flex w-[calc(100%+80px)] shrink-0 items-center gap-3.5 self-stretch border-t border-(--line) bg-[rgba(19,24,19,0.6)] px-10 pb-6 pt-4 shadow-[0_-12px_32px_rgba(0,0,0,0.22)] backdrop-blur-xl max-[760px]:-mx-5.5 max-[760px]:w-[calc(100%+44px)] max-[760px]:gap-2 max-[760px]:px-5.5 max-[760px]:pb-5 @max-[640px]:gap-1.5 @max-[520px]:gap-1"
+          class="player-controls relative z-10 -mx-10 flex w-[calc(100%+80px)] shrink-0 items-center gap-3.5 self-stretch border-t border-(--line) bg-[rgba(19,24,19,0.6)] px-10 pb-6 pt-4 shadow-[0_-12px_32px_rgba(0,0,0,0.22)] backdrop-blur-xl max-[760px]:-mx-5.5 max-[760px]:w-[calc(100%+44px)] max-[760px]:gap-2 max-[760px]:px-5.5 max-[760px]:pb-5 @max-[640px]:gap-1.5 @max-[520px]:gap-1"
           aria-label="播放控制"
         >
           <button
@@ -310,8 +311,27 @@
               </div>
             </div>
           </div>
+          <button
+            id="fullscreen-toggle"
+            class="-ml-1 grid h-8 w-8 shrink-0 place-items-center rounded-lg border-0 bg-transparent p-0 text-(--muted) transition-[color,background] duration-150 hover:bg-[rgba(215,221,214,0.08)] hover:text-(--text-strong) [&_svg]:block [&_svg]:h-4.5 [&_svg]:w-4.5"
+            type="button"
+            aria-pressed="false"
+            aria-label="全屏 (F)"
+            title="全屏 (F)"
+            disabled
+          >
+            <i
+              data-lucide="maximize"
+              class="icon-maximize"
+              aria-hidden="true"
+            ></i>
+            <i
+              data-lucide="minimize"
+              class="icon-minimize"
+              aria-hidden="true"
+            ></i>
+          </button>
         </div>
-        <audio id="audio" preload="metadata"></audio>
       </section>
     </main>
     <script type="module" src="/src/main.js"></script>

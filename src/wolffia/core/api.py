@@ -21,6 +21,19 @@ _ALBUM_ART_SUFFIXES = {".mp3", ".flac", ".m4a"}
 _ALBUM_ART_MAX_EDGE = 1024
 _ALBUM_ART_JPEG_QUALITY = 85
 
+# 全屏切换用：切换过程中临时关闭窗口重绘，隐藏"先恢复还原边界再改变
+# 窗口状态"的中间画面，视觉上一步到位
+_WM_SETREDRAW = 0x000B
+# RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_FRAME | RDW_UPDATENOW
+_RDW_REDRAW_ALL = 0x0585
+
+
+def _set_window_redraw(hwnd, enabled):
+    user32 = ctypes.windll.user32
+    user32.SendMessageW(hwnd, _WM_SETREDRAW, 1 if enabled else 0, 0)
+    if enabled:
+        user32.RedrawWindow(hwnd, None, None, _RDW_REDRAW_ALL)
+
 
 class ApplicationMutex:
     """应用级单例互斥锁"""
@@ -229,6 +242,81 @@ class PlayerApi:
                 return False
         else:
             window.on_top = bool(enabled)
+        return True
+
+    def set_native_fullscreen(self, enabled):
+        """切换原生窗口全屏。
+        WebView2 的元素全屏只能铺满 WebView2 控件区域，标题栏与任务栏仍在，
+        需同步把 WinForms 窗体切成无边框铺满屏幕。pywebview 内置的
+        toggle_fullscreen 未做 Invoke 封送，与 set_on_top 一样直接调用会崩溃；
+        且它在窗口最大化时保存的是最大化后的尺寸，退出全屏会丢失原始大小，
+        因此这里自行实现切换逻辑"""
+        window = self._window()
+        if window is None:
+            return False
+
+        if sys.platform == "win32":
+            try:
+                from webview.platforms import winforms
+
+                instance = winforms.BrowserView.instances.get(window.uid)
+                if instance is None:
+                    return False
+
+                def _set_fullscreen():
+                    # 页面事件可能重复到达，仅在状态不一致时切换，保持幂等
+                    if getattr(instance, "_wolffia_fullscreen", False) == bool(enabled):
+                        return
+
+                    from System.Drawing import Rectangle
+
+                    WinForms = winforms.WinForms
+                    hwnd = instance.Handle.ToInt32()
+                    if enabled:
+                        # 还原状态下的边界；最大化时 Size/Location 是最大化后的
+                        # 值，必须改用 RestoreBounds 才能回到原始大小
+                        instance._wolffia_fullscreen = True
+                        instance._wolffia_state = instance.WindowState
+                        if instance._wolffia_state == WinForms.FormWindowState.Maximized:
+                            bounds = instance.RestoreBounds
+                        else:
+                            bounds = instance.Bounds
+                        instance._wolffia_bounds = (
+                            bounds.X, bounds.Y, bounds.Width, bounds.Height,
+                        )
+
+                        _set_window_redraw(hwnd, False)
+                        instance.FormBorderStyle = getattr(
+                            WinForms.FormBorderStyle, "None"
+                        )
+                        instance.WindowState = WinForms.FormWindowState.Normal
+                        instance.Bounds = WinForms.Screen.FromControl(instance).Bounds
+                        _set_window_redraw(hwnd, True)
+                        winforms.DwmSetWindowAttribute(hwnd, 33, 1)  # 去圆角
+                        winforms.DwmSetWindowAttribute(hwnd, 34, 0xFFFFFFFE)  # 隐藏边框
+                    else:
+                        instance._wolffia_fullscreen = False
+                        winforms.DwmSetWindowAttribute(hwnd, 33, 0)  # 恢复圆角
+                        winforms.DwmSetWindowAttribute(hwnd, 34, 0xFFFFFFFF)  # 显示边框
+
+                        _set_window_redraw(hwnd, False)
+                        instance.FormBorderStyle = WinForms.FormBorderStyle.Sizable
+                        instance.WindowState = WinForms.FormWindowState.Normal
+                        # 必须先让窗体回到保存的还原边界再最大化：WinForms
+                        # 内部记录的"最大化前边界"只在 Normal 状态下随 Bounds
+                        # 更新，原生还原按钮用的就是这份记录
+                        instance.Bounds = Rectangle(*instance._wolffia_bounds)
+                        if instance._wolffia_state == WinForms.FormWindowState.Maximized:
+                            instance.WindowState = WinForms.FormWindowState.Maximized
+                        _set_window_redraw(hwnd, True)
+
+                instance.Invoke(winforms.Func[winforms.Type](_set_fullscreen))
+            except Exception:
+                # pywebview 内部结构变化时放弃原生全屏，不影响 WebView 内全屏
+                return False
+        else:
+            if window.fullscreen != bool(enabled):
+                window.toggle_fullscreen()
         return True
 
     def _refocus_window(self):

@@ -17,6 +17,8 @@ import {
 	ImageOff,
 	Pin,
 	PinOff,
+	Maximize,
+	Minimize,
 	createIcons,
 } from "lucide";
 
@@ -40,6 +42,8 @@ export const lucideIcons = {
 	ImageOff,
 	Pin,
 	PinOff,
+	Maximize,
+	Minimize,
 };
 
 export function refreshIcons(root = document) {

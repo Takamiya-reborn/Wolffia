@@ -11,6 +11,20 @@ SEND_CHUNK_SIZE = 256 * 1024
 
 _RANGE_PATTERN = re.compile(r"bytes=(\d+)-(\d*)")
 
+# mimetypes 在 Windows 上依赖注册表，mkv 等格式可能查不到或查错，
+# 显式映射常见媒体格式保证 Content-Type 正确（视频的编解码器协商依赖它）
+_MEDIA_MIME_TYPES = {
+    ".mp3": "audio/mpeg",
+    ".flac": "audio/flac",
+    ".wav": "audio/wav",
+    ".m4a": "audio/mp4",
+    ".mp4": "video/mp4",
+    ".m4v": "video/mp4",
+    ".mov": "video/quicktime",
+    ".webm": "video/webm",
+    ".mkv": "video/x-matroska",
+}
+
 
 class RangeHandler(BaseHTTPRequestHandler):
     def log_message(self, *args):
@@ -32,7 +46,9 @@ class RangeHandler(BaseHTTPRequestHandler):
             return
 
         size = os.path.getsize(full_path)
-        content_type, _ = mimetypes.guess_type(full_path)
+        content_type = _MEDIA_MIME_TYPES.get(
+            os.path.splitext(full_path)[1].lower()
+        ) or mimetypes.guess_type(full_path)[0]
         range_header = self.headers.get("Range")
 
         start, end = 0, size - 1
