@@ -1,1 +1,0 @@
-uv sync && cd ./wolffia-ui && npm install && npm run build && cd -

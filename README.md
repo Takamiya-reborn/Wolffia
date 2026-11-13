@@ -84,12 +84,15 @@ Wolffia/
 ├── main.py                       # PyInstaller 使用的程序入口
 ├── pyproject.toml                # Python 项目元数据、依赖和 wolffia 命令
 ├── uv.lock                       # Python 依赖锁文件
-├── install.ps1 / install.sh      # 安装前后端依赖
-├── run.ps1 / run.sh              # 启动播放器，可选先构建前端
 ├── wolffia-onedir.spec           # PyInstaller 目录模式配置
 ├── wolffia-onefile.spec          # PyInstaller 单文件模式配置
-├── nuitka-standalone.ps1             # Nuitka 目录模式打包脚本
-├── nuitka-onefile.ps1            # Nuitka 单文件模式打包脚本
+├── nuitka-standalone.ps1        # Nuitka 目录模式打包脚本
+├── nuitka-onefile.ps1           # Nuitka 单文件模式打包脚本
+├── scripts/
+│   ├── install.ps1 / install.sh # 安装前后端依赖
+│   ├── run.ps1 / run.sh         # 启动播放器，可选先构建前端
+│   ├── release.ps1              # 构建、打包产物并发布 GitHub Release（PowerShell）
+│   └── release.sh               # 构建、打包产物并发布 GitHub Release（Bash）
 ├── wolffia-ui/                   # 前端源码项目
 │   ├── package.json              # npm 脚本和前端依赖
 │   ├── vite.config.js            # Vite 配置，输出到 ../src/wolffia/ui
@@ -130,18 +133,18 @@ Wolffia/
 
 ### 1. 安装前后端依赖
 
-根目录脚本安装依赖：
+`scripts/` 目录下的脚本安装依赖：
 
 Windows PowerShell：
 
 ```powershell
-.\install.ps1
+.\scripts\install.ps1
 ```
 
 Linux Bash：
 
 ```bash
-./install.sh
+./scripts/install.sh
 ```
 
 也可以手动安装 Python 依赖：
@@ -185,13 +188,13 @@ npm run dev
 Windows PowerShell：
 
 ```powershell
-.\run.ps1 [build]
+.\scripts\run.ps1 [build]
 ```
 
 Linux Bash 环境：
 
 ```bash
-./run.sh [build]
+./scripts/run.sh [build]
 ```
 
 添加 `build` 参数时，脚本会先重新构建前端，再启动播放器。
@@ -245,6 +248,46 @@ uv run python -m PyInstaller --onefile --noconsole --name wolffia --add-data "sr
 ```
 
 两个脚本都会使用 Nuitka 编译 Python 程序，将 `src/wolffia/ui/` 作为 `ui` 数据目录嵌入，并关闭控制台窗口。目录模式的构建结果位于 `nuitka/standalone/`，单文件模式的构建结果位于 `nuitka/onefile/`。
+
+## 发布 Release
+
+`scripts/` 下的发布脚本会自动完成：读取 `pyproject.toml` 中的版本号、运行四种打包（Nuitka/PyInstaller 的单文件与目录模式）、将产物整理到 `release/` 目录，并上传到 GitHub Release。
+
+发布说明写在根目录的 `release-notes.md` 中（不纳入 git 跟踪），存在时作为 Release notes 上传，不存在时由 GitHub 自动生成。
+
+产物命名（以 `0.1.7` 为例）：
+
+```text
+Wolffia_v0.1.7_nuitka_onefile.exe
+Wolffia_v0.1.7_nuitka_standalone.zip
+Wolffia_v0.1.7_pyi_onefile.exe
+Wolffia_v0.1.7_pyi_onedir.zip
+```
+
+发布前需要安装 [GitHub CLI](https://cli.github.com/) 并完成登录：
+
+```powershell
+winget install GitHub.cli
+gh auth login
+```
+
+Windows PowerShell：
+
+```powershell
+.\scripts\release.ps1                # 完整流程：构建 + 打包 + 发布
+.\scripts\release.ps1 -DryRun        # 只构建和打包，不发布
+.\scripts\release.ps1 -SkipBuild     # 跳过构建，用已有产物打包并发布
+```
+
+Linux Bash / Git Bash：
+
+```bash
+./scripts/release.sh                 # 完整流程
+./scripts/release.sh --dry-run       # 只构建和打包，不发布
+./scripts/release.sh --skip-build    # 跳过构建，用已有产物打包并发布
+```
+
+`release/` 目录每次运行都会清空重建，且不纳入 git 跟踪。
 
 ## 部署与使用
 

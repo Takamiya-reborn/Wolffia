@@ -36,4 +36,7 @@ logs/
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+*.sw?# Release 产物
+release/
+# Release notes(每次发布临时写)
+release-notes.md
