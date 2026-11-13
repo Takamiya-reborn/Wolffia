@@ -39,7 +39,7 @@
 	letter-spacing: 0.04em;
 	opacity: 0;
 	pointer-events: none;
-	transition: opacity 0.2s ease;
+	/* 淡出必须瞬时：退出专辑图模式时歌词立即可见，渐隐会和歌词重叠 */
 }
 
 .lyrics-art-toggle {
@@ -141,6 +141,8 @@
 
 #lyrics-area.is-artwork-mode.is-no-art .lyrics-art-empty {
 	opacity: 1;
+	/* 渐入只放显示态，消失走基类的瞬时切换 */
+	transition: opacity 0.2s ease;
 }
 
 .lrc-active {

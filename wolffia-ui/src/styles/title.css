@@ -19,6 +19,10 @@
 #current-title .title-text {
 	flex: none;
 	white-space: nowrap;
+	background: linear-gradient(180deg, #e9ece6 0%, #b7beb3 100%);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
 }
 
 #current-title.is-overflowing {

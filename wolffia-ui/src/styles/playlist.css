@@ -2,6 +2,7 @@
 
 /* 列表宽度：默认占视口 20%，由拖拽手柄在 20%–50% 之间调整 */
 #list {
+	position: relative;
 	flex: 0 0 var(--list-width, 20vw);
 	transition: flex-basis 0.2s ease;
 }
@@ -9,7 +10,6 @@
 /* 收起状态：宽度归零并隐藏拖拽手柄，flex-basis 过渡产生收合动画 */
 body.is-list-collapsed #list {
 	flex-basis: 0;
-	border-right-width: 0;
 }
 
 body.is-list-collapsed #list-resizer {
@@ -62,32 +62,57 @@ body.is-resizing-list {
 	user-select: none;
 }
 
+/* 原生滚动条隐藏，改用下方浮层滚动条 */
 #songs {
-	scrollbar-width: auto !important;
-	scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
+	overflow-x: hidden !important;
+	scrollbar-width: none !important;
 }
 
 #songs::-webkit-scrollbar {
-	width: 14px !important;
-}
-
-#songs::-webkit-scrollbar-button {
 	display: none !important;
 }
 
-#songs::-webkit-scrollbar-track {
-	background: transparent !important;
+/* 悬浮滚动条：显隐由 scrollbar.js 控制；轨道 pointer-events: none，
+   不拦截列表的滚轮和悬停 */
+#songs-scrollbar {
+	position: absolute;
+	top: 63px; /* aside pt-4(16px) + 列表头 h-11.75(47px) */
+	bottom: 0;
+	right: 2px;
+	z-index: 15;
+	width: 14px;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.18s ease;
 }
 
-#songs::-webkit-scrollbar-thumb {
-	background-color: rgba(255, 255, 255, 0.2) !important;
-	border-radius: 0 !important;
-	border: 2px solid transparent !important;
-	background-clip: padding-box !important;
+#songs-scrollbar.is-visible {
+	opacity: 1;
 }
 
-#songs::-webkit-scrollbar-thumb:hover {
-	background-color: rgba(255, 255, 255, 0.3) !important;
+#songs-scrollbar-thumb {
+	position: absolute;
+	top: 0;
+	left: 3px;
+	width: 8px;
+	border-radius: 999px;
+	background: rgba(215, 221, 214, 0.22);
+	pointer-events: auto;
+	cursor: grab;
+	transition: background-color 0.15s ease, width 0.15s ease, left 0.15s ease;
+}
+
+/* transform 不参与过渡，保证拖拽/滚动跟手 */
+#songs-scrollbar-thumb:hover,
+#songs-scrollbar-thumb.is-dragging {
+	left: 2px;
+	width: 10px;
+	background: rgba(215, 221, 214, 0.36);
+}
+
+#songs-scrollbar-thumb.is-dragging {
+	background: var(--accent);
+	cursor: grabbing;
 }
 
 .song-context-menu {
@@ -96,9 +121,9 @@ body.is-resizing-list {
 	min-width: 176px;
 	padding: 5px;
 	border: 1px solid rgba(215, 221, 214, 0.14);
-	border-radius: 7px;
+	border-radius: 9px;
 	background: rgba(29, 36, 30, 0.98);
-	box-shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
+	box-shadow: 0 16px 36px rgba(0, 0, 0, 0.36);
 	backdrop-filter: blur(16px);
 }
 
@@ -123,6 +148,15 @@ body.is-resizing-list {
 	color: var(--text-strong);
 }
 
+/* 列表行：左右内缩 + 圆角，hover 以色块浮现 */
+.directory-toggle,
+.song-item {
+	position: relative;
+	margin: 1px 8px;
+	border-radius: 9px;
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
 .directory-toggle.expanded .directory-chevron {
 	transform: rotate(90deg);
 }
@@ -137,16 +171,39 @@ body.is-resizing-list {
 	grid-template-rows: 1fr;
 }
 
+/* 子级缩进导引线：从主题色渐隐到底部透明，比实线柔和 */
 .collapsible-inner {
+	position: relative;
 	overflow: hidden;
 	min-height: 0;
 	margin-left: 16px;
-	border-left: 1px solid var(--line);
 }
 
+.collapsible-inner::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 1px;
+	pointer-events: none;
+	background: rgba(215, 221, 214, 0.11);
+}
+
+/* 当前播放行：左缘色条用圆角元素，避免 inset 阴影的方角戳出卡片圆角 */
 .song-item.active {
-	background: var(--accent-soft) !important;
-	box-shadow: inset 2px 0 0 var(--accent);
+	background: linear-gradient(90deg, rgba(169, 201, 160, 0.17) 0%, rgba(169, 201, 160, 0.05) 100%) !important;
 	color: var(--accent) !important;
 	font-weight: 600 !important;
+}
+
+.song-item.active::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 7px;
+	bottom: 7px;
+	width: 2.5px;
+	border-radius: 999px;
+	background: var(--accent);
 }

@@ -3,6 +3,7 @@ import { dom } from "./js/dom.js";
 import { refreshIcons } from "./js/icons.js";
 import { formatTime } from "./js/utils.js";
 import { createLyricsController } from "./js/lyrics.js";
+import { setupOverlayScrollbar } from "./js/scrollbar.js";
 
 const SEEK_STEP = 5;
 const VOLUME_STEP = 0.05;
@@ -35,9 +36,11 @@ let videoMode = false;
 
 const { media, list, listResizer, listCollapseToggle, volume, volumeValue, volumeControl, volumePopup, duration, progress, lyricsBg, lyricsArea, lyricsArtToggle, pinToggle, fullscreenToggle,
 	lyricsWrapper: wrapper, lyricsContainer, playToggle, muteToggle, currentTime, playlist, playlistCount, playlistName,
+	songsScrollbar, songsScrollbarThumb,
 	loopModeToggle, songContextMenu, titleContextMenu, playbackRateMenu,
 	playbackRateToggle, playbackRateOptions, playerHeader, currentTitle, titleText } = dom;
 const lyrics = createLyricsController({ wrapper, container: lyricsContainer });
+setupOverlayScrollbar({ scroller: playlist, track: songsScrollbar, thumb: songsScrollbarThumb });
 
 function setArtworkMode(enabled) {
 	artworkMode = enabled;
@@ -301,14 +304,14 @@ function renderTree(node, container, parentPath = "") {
 		const childrenInner = document.createElement("div");
 
 		directory.className = "directory-node";
-		toggle.className = "directory-toggle flex w-full cursor-pointer items-center gap-1.5 border-0 border-b border-[var(--line)] bg-transparent py-3 pr-3 pl-3 text-left text-[13px] leading-[1.4] text-[#8f958d] hover:bg-[var(--panel-raised)] hover:text-[#f0f2ec]";
+		toggle.className = "directory-toggle flex w-full cursor-pointer items-center gap-2 border-0 bg-transparent py-2.5 pr-3 pl-2.5 text-left text-[13px] font-medium leading-[1.4] text-[#a4aca2] hover:bg-[rgba(215,221,214,0.07)] hover:text-[#eef1ea]";
 		toggle.type = "button";
 
-		chevron.className = "directory-chevron block h-[13px] w-[13px] shrink-0 transition-transform duration-150";
+		chevron.className = "directory-chevron block h-[13px] w-[13px] shrink-0 text-[var(--faint)] transition-transform duration-150";
 		chevron.dataset.lucide = "chevron-right";
 		chevron.setAttribute("aria-hidden", "true");
 
-		folderIcon.className = "block h-3.5 w-3.5 shrink-0";
+		folderIcon.className = "block h-3.5 w-3.5 shrink-0 text-[var(--accent)] opacity-75";
 		folderIcon.dataset.lucide = "folder";
 		folderIcon.setAttribute("aria-hidden", "true");
 
@@ -341,17 +344,17 @@ function renderTree(node, container, parentPath = "") {
 		container.appendChild(directory);
 	});
 
-	// pl-[31px] = pl-3(12px) + chevron(13px) + gap(6px)，让 music 图标与 folder 图标列对齐；
+	// pl-[31px] = pl-2.5(10px) + chevron(13px) + gap(8px)，让 music 图标与 folder 图标列对齐；
 	// 若调整图标尺寸或间距，需同步修改此值
 	node.songs.forEach(({ song, index }) => {
 		const item = document.createElement("div");
 		const songIcon = document.createElement("i");
 		const songName = document.createElement("span");
 
-		item.className = "song-item flex w-full cursor-pointer items-center gap-1.5 border-b border-[var(--line)] py-3 pr-3 pl-[31px] text-left text-[13px] leading-[1.4] text-[var(--muted)] hover:bg-[var(--panel-raised)] hover:text-[#f0f2ec]";
+		item.className = "song-item flex w-full cursor-pointer items-center gap-2 border-0 bg-transparent py-2.5 pr-3 pl-[31px] text-left text-[13px] leading-[1.4] text-[var(--muted)] hover:bg-[rgba(215,221,214,0.055)] hover:text-[#eef1ea]";
 		item.id = "item-" + index;
 
-		songIcon.className = "block h-3.5 w-3.5 shrink-0";
+		songIcon.className = "block h-3.5 w-3.5 shrink-0 text-[var(--faint)] opacity-80";
 		songIcon.dataset.lucide = "music";
 		songIcon.setAttribute("aria-hidden", "true");
 

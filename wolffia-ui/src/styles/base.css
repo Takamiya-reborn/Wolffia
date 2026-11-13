@@ -1,5 +1,5 @@
 :root {
-	font-family: "Avenir Next", "Segoe UI", sans-serif;
+	font-family: "Avenir Next", "Segoe UI Variable Display", "Segoe UI", sans-serif;
 	color: #edf0ea;
 	background: #121712;
 	font-synthesis: none;
@@ -18,6 +18,55 @@
 
 * {
 	box-sizing: border-box;
+}
+
+/* 噪点纹理（透明度烘焙在 SVG 内）+ 两层光晕，避免整块平色 */
+.app-shell {
+	background-color: var(--canvas);
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"),
+		radial-gradient(circle at 76% 30%, rgba(169, 201, 160, 0.055) 0%, transparent 46%),
+		radial-gradient(circle at 18% 88%, rgba(169, 201, 160, 0.032) 0%, transparent 42%),
+		linear-gradient(180deg, #141a14 0%, var(--canvas) 58%);
+}
+
+/* 渐隐发丝线：只占 ::before，::after 留给组件自己的装饰（如标题发光层） */
+.hairline-b,
+.hairline-t,
+.hairline-r {
+	position: relative;
+}
+
+.hairline-b::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 1px;
+	pointer-events: none;
+	background: linear-gradient(90deg, transparent 0%, rgba(215, 221, 214, 0.13) 10%, rgba(215, 221, 214, 0.13) 90%, transparent 100%);
+}
+
+.hairline-t::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	height: 1px;
+	pointer-events: none;
+	background: linear-gradient(90deg, transparent 0%, rgba(215, 221, 214, 0.13) 10%, rgba(215, 221, 214, 0.13) 90%, transparent 100%);
+}
+
+.hairline-r::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: 0;
+	width: 1px;
+	pointer-events: none;
+	background: linear-gradient(180deg, rgba(215, 221, 214, 0.14) 0%, rgba(215, 221, 214, 0.05) 55%, rgba(215, 221, 214, 0.12) 100%);
 }
 
 html {

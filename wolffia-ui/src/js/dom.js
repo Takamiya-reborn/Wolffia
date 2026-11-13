@@ -22,6 +22,8 @@ export const dom = {
 	muteToggle: document.getElementById("mute-toggle"),
 	currentTime: document.getElementById("current-time"),
 	playlist: document.getElementById("songs"),
+	songsScrollbar: document.getElementById("songs-scrollbar"),
+	songsScrollbarThumb: document.getElementById("songs-scrollbar-thumb"),
 	playlistCount: document.getElementById("playlist-count"),
 	playlistName: document.getElementById("playlist-name"),
 	loopModeToggle: document.getElementById("loop-mode-toggle"),

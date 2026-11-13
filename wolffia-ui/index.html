@@ -7,35 +7,40 @@
   </head>
 
   <body>
-    <main
-      class="flex h-screen min-h-0 bg-[radial-gradient(circle_at_76%_38%,#1a1f1a_0%,#121712_40%,var(--canvas)_100%)]"
-    >
+    <main class="app-shell flex h-screen min-h-0">
       <aside
         id="list"
-        class="flex min-w-0 flex-col overflow-hidden border-r border-(--line) bg-[rgba(21,23,21,0.84)] px-0 pb-5 pt-4"
+        class="hairline-r flex min-w-0 flex-col overflow-hidden bg-[linear-gradient(180deg,rgba(28,34,28,0.72)_0%,rgba(18,23,18,0.6)_100%)] px-0 pb-5 pt-4"
       >
         <header
-          class="flex h-11.75 shrink-0 items-center gap-1.5 border-b border-(--line) pr-3 pl-7.75"
+          class="hairline-b flex h-11.75 shrink-0 items-center gap-2.5 pr-3 pl-4"
         >
-          <i
-            data-lucide="list"
-            class="block h-4.5 w-4.5 text-(--accent)"
-            aria-hidden="true"
-          ></i>
+          <span
+            class="grid h-7 w-7 shrink-0 place-items-center rounded-[9px] border border-[rgba(169,201,160,0.16)] bg-[rgba(169,201,160,0.1)]"
+          >
+            <i
+              data-lucide="list"
+              class="block h-4 w-4 text-(--accent)"
+              aria-hidden="true"
+            ></i>
+          </span>
           <h1
             id="playlist-name"
-            class="m-0 min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-[16px] font-semibold leading-[1.4] tracking-[-0.01em] text-(--text-strong)"
+            class="m-0 min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-[15px] font-semibold leading-[1.4] tracking-[-0.005em] text-(--text-strong)"
             title="播放列表"
           >
             播放列表
           </h1>
           <span
             id="playlist-count"
-            class="shrink-0 rounded-full bg-[rgba(215,221,214,0.07)] px-2 py-0.75 text-[13px] font-medium leading-none tracking-[0.04em] text-(--faint) tabular-nums"
+            class="shrink-0 rounded-full border border-[rgba(215,221,214,0.08)] bg-[rgba(215,221,214,0.07)] px-2 py-0.75 text-[12px] font-medium leading-none tracking-[0.04em] text-(--faint) tabular-nums"
             >0</span
           >
         </header>
         <div id="songs" class="min-h-0 flex-1 overflow-y-auto pb-3"></div>
+        <div id="songs-scrollbar" aria-hidden="true">
+          <div id="songs-scrollbar-thumb"></div>
+        </div>
         <div
           id="song-context-menu"
           class="song-context-menu"
@@ -74,14 +79,14 @@
       >
         <header
           id="player-header"
-          class="-mx-10 flex h-11.75 w-[calc(100%+80px)] shrink-0 self-stretch items-center justify-center gap-2.5 border-b border-(--line) px-10 max-[760px]:-mx-5.5 max-[760px]:w-[calc(100%+44px)] max-[760px]:px-5.5"
+          class="hairline-b -mx-10 flex h-11.75 w-[calc(100%+80px)] shrink-0 self-stretch items-center justify-center gap-2.5 px-10 max-[760px]:-mx-5.5 max-[760px]:w-[calc(100%+44px)] max-[760px]:px-5.5"
         >
           <div class="eq-icon" aria-hidden="true">
             <span></span><span></span><span></span>
           </div>
           <h2
             id="current-title"
-            class="m-0 min-w-0 flex-1 overflow-hidden text-[clamp(17px,2vw,22px)] font-semibold tracking-[-0.02em] text-[#c9ccc6]"
+            class="m-0 min-w-0 flex-1 overflow-hidden text-[clamp(17px,2vw,22px)] font-semibold tracking-[-0.02em]"
           >
             <span id="title-text" class="title-text">双击选择文件夹</span>
           </h2>
@@ -149,7 +154,7 @@
           <video id="media" preload="metadata" playsinline></video>
         </div>
         <div
-          class="player-controls relative z-10 -mx-10 flex w-[calc(100%+80px)] shrink-0 items-center gap-3.5 self-stretch border-t border-(--line) bg-[rgba(19,24,19,0.6)] px-10 pb-6 pt-4 shadow-[0_-12px_32px_rgba(0,0,0,0.22)] backdrop-blur-xl max-[760px]:-mx-5.5 max-[760px]:w-[calc(100%+44px)] max-[760px]:gap-2 max-[760px]:px-5.5 max-[760px]:pb-5 @max-[640px]:gap-1.5 @max-[520px]:gap-1"
+          class="player-controls hairline-t relative z-10 -mx-10 flex w-[calc(100%+80px)] shrink-0 items-center gap-3.5 self-stretch bg-[linear-gradient(180deg,rgba(23,28,23,0.7)_0%,rgba(16,20,16,0.82)_100%)] px-10 pb-6 pt-4 shadow-[0_-12px_32px_rgba(0,0,0,0.22)] backdrop-blur-xl max-[760px]:-mx-5.5 max-[760px]:w-[calc(100%+44px)] max-[760px]:gap-2 max-[760px]:px-5.5 max-[760px]:pb-5 @max-[640px]:gap-1.5 @max-[520px]:gap-1"
           aria-label="播放控制"
         >
           <button
