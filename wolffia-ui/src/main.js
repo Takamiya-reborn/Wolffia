@@ -2,6 +2,7 @@ import "./style.css";
 import { dom } from "./js/dom.js";
 import { refreshIcons } from "./js/icons.js";
 import { formatTime } from "./js/utils.js";
+import { visualToLayout, setUiZoom } from "./js/zoom.js";
 import { createLyricsController } from "./js/lyrics.js";
 import { setupOverlayScrollbar } from "./js/scrollbar.js";
 
@@ -38,7 +39,35 @@ const { media, list, listResizer, listCollapseToggle, volume, volumeValue, volum
 	lyricsWrapper: wrapper, lyricsContainer, playToggle, muteToggle, currentTime, playlist, playlistCount, playlistName,
 	songsScrollbar, songsScrollbarThumb,
 	loopModeToggle, songContextMenu, titleContextMenu, playbackRateMenu,
-	playbackRateToggle, playbackRateOptions, playerHeader, currentTitle, titleText } = dom;
+	playbackRateToggle, playbackRateOptions, playerHeader, currentTitle, titleText,
+	gainInput, gainLabels } = dom;
+
+// 增益走 Web Audio（createMediaElementSource）时，无 CORS 头的跨源媒体会被
+// 强制静音；媒体源在 127.0.0.1 与页面跨源，必须以 CORS 模式加载，
+// 服务器侧已返回 Access-Control-Allow-Origin: *
+media.crossOrigin = "anonymous";
+
+// —— 窗口尺寸自适应：整体等比缩放 UI（transform: scale）——
+// 设计基准与硬边界：缩放倍率只取决于窗口的 CSS 尺寸（OS 的 DPI 缩放
+// 已折算在内），同分辨率下所有设备观感一致
+const UI_BASE_WIDTH = 1280; // 设计基准
+const UI_BASE_HEIGHT = 720;
+const UI_ZOOM_MIN = 1; // 小于基准的窗口不再缩小，交给弹性布局
+const UI_ZOOM_MAX = 1.25; // 放大上限：最大化与基准差距可控，观感一致
+
+function applyUiZoom() {
+	const scale = Math.min(
+		Math.max(
+			Math.min(window.innerWidth / UI_BASE_WIDTH, window.innerHeight / UI_BASE_HEIGHT),
+			UI_ZOOM_MIN,
+		),
+		UI_ZOOM_MAX,
+	);
+	setUiZoom(scale);
+	document.documentElement.style.setProperty("--ui-zoom", String(scale));
+}
+applyUiZoom();
+window.addEventListener("resize", applyUiZoom);
 const lyrics = createLyricsController({ wrapper, container: lyricsContainer });
 setupOverlayScrollbar({ scroller: playlist, track: songsScrollbar, thumb: songsScrollbarThumb });
 
@@ -211,12 +240,17 @@ window.addEventListener("pointercancel", () => {
 });
 
 // —— 列表宽度拖拽——
-function setListWidth(width) {
+// 入参为视觉像素（rect/clientX）；--list-width 在缩放坐标系里，
+// 须除回倍率，否则每次回写都会按倍率复利变宽
+function setListWidth(visualWidth) {
 	const viewportWidth = window.innerWidth;
 	const lower = viewportWidth * LIST_MIN_RATIO;
 	const upper = viewportWidth * LIST_MAX_RATIO;
-	const clamped = Math.min(Math.max(width, lower), upper);
-	list.style.setProperty("--list-width", `${(clamped / viewportWidth) * 100}vw`);
+	const clamped = Math.min(Math.max(visualWidth, lower), upper);
+	list.style.setProperty(
+		"--list-width",
+		`${(visualToLayout(clamped) / viewportWidth) * 100}vw`,
+	);
 }
 
 listResizer.addEventListener("pointerdown", (event) => {
@@ -253,6 +287,9 @@ listResizer.addEventListener("keydown", (event) => {
 	setListWidth(list.getBoundingClientRect().width + delta);
 });
 
+// 增益徽标的存活定时器（非 null 表示徽标正在显示增益而非音量百分比）
+let gainBadgeTimer = null;
+
 function updatePlayerState() {
 	const hasDuration = Number.isFinite(media.duration) && media.duration > 0;
 	if (progressDragging) {
@@ -277,7 +314,8 @@ function updatePlayerState() {
 	const volumePercentage = media.muted ? 0 : media.volume * 100;
 	volume.value = volumePercentage / 100;
 	volume.style.setProperty("--volume", `${volumePercentage}%`);
-	volumeValue.innerText = `${Math.round(volumePercentage)}%`;
+	// 增益徽标存活期间不覆盖文案（徽标显示的是增益而非音量百分比）
+	if (!gainBadgeTimer) volumeValue.innerText = `${Math.round(volumePercentage)}%`;
 	const isMuted = media.muted || media.volume === 0;
 	muteToggle.classList.toggle("is-muted", isMuted);
 	muteToggle.setAttribute("aria-label", isMuted ? "取消静音" : "静音");
@@ -413,11 +451,12 @@ function openContextMenu(menu, clientX, clientY) {
 	if (menu !== songContextMenu) closeSongContextMenu();
 	if (menu !== titleContextMenu) titleContextMenu.hidden = true;
 	menu.hidden = false;
+	// 菜单尺寸与光标坐标都是视觉像素，钳制后换算到布局坐标系再写入
 	const menuRect = menu.getBoundingClientRect();
 	const left = Math.min(clientX, window.innerWidth - menuRect.width - 8);
 	const top = Math.min(clientY, window.innerHeight - menuRect.height - 8);
-	menu.style.left = `${Math.max(8, left)}px`;
-	menu.style.top = `${Math.max(8, top)}px`;
+	menu.style.left = `${visualToLayout(Math.max(8, left))}px`;
+	menu.style.top = `${visualToLayout(Math.max(8, top))}px`;
 }
 
 function openSongContextMenu(clientX, clientY) {
@@ -777,6 +816,86 @@ playbackRateToggle.onkeydown = (event) => {
 	}
 	if (event.key === "Escape") setPlaybackRateMenuOpen(false);
 };
+
+// —— 声音增益档位（分贝补偿）：音量弹层里的响度辅助 ——
+// 大小声差异大的音频用 +/-dB 档位拉齐。纯前端 Web Audio 实现，
+// pywebview 与 Electron 双产线行为一致。
+// 无持久化：档位只在本次会话内有效，每次启动回到 0dB（无状态运行）
+const GAIN_MIN = -12;
+const GAIN_MAX = 12;
+let audioCtx = null;
+let gainNode = null;
+let currentGainDb = 0;
+
+function clampGain(db) {
+	if (!Number.isFinite(db)) return 0;
+	return Math.min(Math.max(Math.round(db), GAIN_MIN), GAIN_MAX);
+}
+
+function updateGainUI() {
+	gainInput.value = currentGainDb;
+	// 轨道填充比例：-12dB 为 0%，+12dB 为 100%，与音量条同一套视觉
+	gainInput.style.setProperty(
+		"--gain",
+		`${((currentGainDb - GAIN_MIN) / (GAIN_MAX - GAIN_MIN)) * 100}%`,
+	);
+	gainLabels.forEach((label) => {
+		label.classList.toggle(
+			"is-active",
+			Number(label.dataset.gain) === currentGainDb,
+		);
+	});
+}
+
+// createMediaElementSource 对同一个元素只能调用一次，建图后音频固定走
+// Web Audio，0dB 档也要保持 gain=1（断开会静音）。AudioContext 需要用户
+// 手势才能 resume，所以建图/恢复都发生在点击档位或 play 事件里。
+function applyGainGraph() {
+	if (currentGainDb === 0) {
+		if (gainNode) gainNode.gain.value = 1;
+		return;
+	}
+	if (!audioCtx) {
+		audioCtx = new AudioContext();
+		const source = audioCtx.createMediaElementSource(media);
+		gainNode = audioCtx.createGain();
+		source.connect(gainNode);
+		gainNode.connect(audioCtx.destination);
+	}
+	if (audioCtx.state === "suspended") audioCtx.resume();
+	gainNode.gain.value = 10 ** (currentGainDb / 20);
+}
+
+media.addEventListener("play", () => {
+	// 会话内选过非 0dB 档的，等首次播放（用户手势）再建图并恢复
+	if (currentGainDb !== 0) applyGainGraph();
+});
+
+// 调增益时徽标显示增益值而不是音量百分比，短暂点亮后恢复音量显示
+function showGainBadge() {
+	volumeValue.innerText = `${currentGainDb > 0 ? "+" : ""}${currentGainDb}dB`;
+	volumePopup.classList.add("is-visible");
+	volumeValue.classList.add("is-visible");
+	if (gainBadgeTimer) clearTimeout(gainBadgeTimer);
+	gainBadgeTimer = setTimeout(() => {
+		gainBadgeTimer = null;
+		volumeValue.classList.remove("is-visible");
+		volumePopup.classList.remove("is-visible");
+		updatePlayerState();
+	}, 900);
+}
+
+function setGain(db) {
+	currentGainDb = clampGain(db);
+	updateGainUI();
+	applyGainGraph();
+	showGainBadge();
+}
+
+gainInput.oninput = () => setGain(Number(gainInput.value));
+// 增益不支持滚轮调节：整个弹层容器的滚轮统一走外层音量处理，只有拖动滑杆才改增益
+
+updateGainUI();
 
 muteToggle.onclick = toggleMute;
 

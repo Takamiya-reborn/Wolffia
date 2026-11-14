@@ -1,6 +1,19 @@
 const path = require("path");
 const fs = require("fs");
+const os = require("os");
 const { app, BrowserWindow, dialog, ipcMain } = require("electron");
+
+// 无残留运行：Chromium 的 Local Storage / Cache / GPUCache 默认落在
+// %APPDATA%/<app>，统一重定向到本次启动的临时目录，退出时整体删除
+const tempUserData = path.join(os.tmpdir(), `wolffia-electron-${process.pid}`);
+app.setPath("userData", tempUserData);
+app.on("will-quit", () => {
+	try {
+		fs.rmSync(tempUserData, { recursive: true, force: true, maxRetries: 5 });
+	} catch {
+		// 个别文件被占用删不掉时留给系统清理临时目录，不阻塞退出
+	}
+});
 
 const { createMediaServer } = require("./backend/mediaserver.cjs");
 const { scanFolder } = require("./backend/scanner.cjs");
@@ -44,6 +57,9 @@ function createWindow() {
     // 无边框 + 页面内自绘标题栏(titlebar 区拖拽/窗口按钮走 window:* IPC)
     frame: false,
     webPreferences: {
+      // AudioContext 不再因缺用户手势而停在 suspended——否则增益建图后
+      // 媒体声音路由进静音上下文,表现为完全无声
+      autoplayPolicy: "no-user-gesture-required",
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false,

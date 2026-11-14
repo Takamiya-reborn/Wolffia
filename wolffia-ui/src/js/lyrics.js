@@ -9,10 +9,9 @@ export function createLyricsController({ wrapper, container }) {
 	function center(index) {
 		const line = elements[index];
 		if (!line) return;
-		const wrapperRect = wrapper.getBoundingClientRect();
-		const lineRect = line.getBoundingClientRect();
-		const lineOffset = lineRect.top - wrapperRect.top;
-		const top = container.clientHeight / 2 - lineOffset - lineRect.height / 2;
+		// 统一用布局坐标（offset* 不受 body transform 缩放影响），
+		// 与 getBoundingClientRect 的视觉像素混用会在缩放窗口上错位
+		const top = container.clientHeight / 2 - line.offsetTop - line.offsetHeight / 2;
 		wrapper.style.top = `${top}px`;
 	}
 

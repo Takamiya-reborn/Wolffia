@@ -37,7 +37,7 @@
         </button>
       </div>
     </header>
-    <main class="app-shell flex h-screen min-h-0">
+    <main class="app-shell flex h-full min-h-0">
       <aside
         id="list"
         class="hairline-r flex min-w-0 flex-col overflow-hidden bg-[linear-gradient(180deg,rgba(28,34,28,0.72)_0%,rgba(18,23,18,0.6)_100%)] px-0 pb-5 pt-4"
@@ -355,6 +355,48 @@
                   aria-label="音量"
                   title="音量 (↑/↓)"
                 />
+              </div>
+              <!-- 增益档位滑杆：像自动挡排挡——滑条吸附档位（step=3），上正下负 0 居中；
+                   右侧刻度对应每个档位 -->
+              <div class="gain-column">
+                <div class="gain-row">
+                  <!-- 档位引导线：与刻度同一均分位置，垫在滑杆和文字之下 -->
+                  <div class="gain-ticks" aria-hidden="true">
+                    <i style="top: 0%"></i>
+                    <i style="top: 12.5%"></i>
+                    <i style="top: 25%"></i>
+                    <i style="top: 37.5%"></i>
+                    <i style="top: 50%"></i>
+                    <i style="top: 62.5%"></i>
+                    <i style="top: 75%"></i>
+                    <i style="top: 87.5%"></i>
+                    <i style="top: 100%"></i>
+                  </div>
+                  <div class="gain-slider">
+                    <input
+                      id="gain"
+                      class="gain cursor-pointer appearance-none bg-transparent"
+                      type="range"
+                      min="-12"
+                      max="12"
+                      step="3"
+                      value="0"
+                      aria-label="增益"
+                      title="增益（±12dB，档位 3dB）"
+                    />
+                  </div>
+                  <div class="gain-labels" aria-hidden="true">
+                    <span data-gain="12" style="top: 0%">+12</span>
+                    <span data-gain="9" style="top: 12.5%">+9</span>
+                    <span data-gain="6" style="top: 25%">+6</span>
+                    <span data-gain="3" style="top: 37.5%">+3</span>
+                    <span data-gain="0" style="top: 50%">0</span>
+                    <span data-gain="-3" style="top: 62.5%">-3</span>
+                    <span data-gain="-6" style="top: 75%">-6</span>
+                    <span data-gain="-9" style="top: 87.5%">-9</span>
+                    <span data-gain="-12" style="top: 100%">-12</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

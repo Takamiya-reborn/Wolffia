@@ -93,6 +93,9 @@ class RangeHandler(BaseHTTPRequestHandler):
             # 音频拖动依赖标准 Range 响应
             self.send_response(206 if partial else 200)
 
+            # Web Audio 的 createMediaElementSource 对无 CORS 头的跨源媒体强制
+            # 静音：页面源与 127.0.0.1 跨源，前端增益功能依赖这条头
+            self.send_header("Access-Control-Allow-Origin", "*")
             self.send_header("Content-Type", content_type or "application/octet-stream")
             self.send_header("Accept-Ranges", "bytes")
             if partial:

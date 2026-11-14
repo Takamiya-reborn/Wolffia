@@ -79,7 +79,13 @@ body {
 	position: relative;
 	margin: 0;
 	min-width: 640px;
-	height: 100vh;
+	/* 窗口自适应：transform 等比缩放。布局尺寸 = 视口 / 倍率，
+	   视觉尺寸 = 布局 × 倍率，恒等于视口——transform 的缩放行为
+	   完全确定，不像 zoom 对自身尺寸标注有歧义 */
+	width: calc(100vw / var(--ui-zoom, 1));
+	height: calc(100vh / var(--ui-zoom, 1));
+	transform: scale(var(--ui-zoom, 1));
+	transform-origin: 0 0;
 	overflow: hidden;
 	background: var(--canvas);
 	color: #e8e9e7;

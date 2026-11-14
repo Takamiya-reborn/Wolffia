@@ -1,4 +1,6 @@
 // 列表悬浮滚动条：hover 列表且可滚动时浮现，离开即隐藏，支持拖拽拇指。
+import { visualToLayout } from "./zoom.js";
+
 export function setupOverlayScrollbar({ scroller, track, thumb }) {
 	const HIDE_DELAY = 140;
 	const MIN_THUMB = 28;
@@ -77,7 +79,9 @@ export function setupOverlayScrollbar({ scroller, track, thumb }) {
 		const maxThumb = track.clientHeight - thumb.offsetHeight;
 		const maxScroll = scroller.scrollHeight - scroller.clientHeight;
 		if (maxThumb <= 0 || maxScroll <= 0) return;
-		const ratio = Math.min(Math.max((dragStartThumbY + event.clientY - dragStartY) / maxThumb, 0), 1);
+		// clientY 是视觉像素，thumbY 是布局像素，换算后再求比例
+		const delta = visualToLayout(event.clientY - dragStartY);
+		const ratio = Math.min(Math.max((dragStartThumbY + delta) / maxThumb, 0), 1);
 		scroller.scrollTop = ratio * maxScroll;
 	});
 

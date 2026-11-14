@@ -20,6 +20,8 @@ import {
 	Maximize,
 	Minimize,
 	PanelLeft,
+	Minus,
+	Plus,
 	createIcons,
 } from "lucide";
 
@@ -46,6 +48,8 @@ export const lucideIcons = {
 	Maximize,
 	Minimize,
 	PanelLeft,
+	Minus,
+	Plus,
 };
 
 export function refreshIcons(root = document) {

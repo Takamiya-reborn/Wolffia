@@ -42,6 +42,97 @@
     color: var(--accent);
 }
 
+/* 增益档位滑杆：与音量滑杆并排的第二列，右侧带档位刻度。
+   step=3 吸附档位，拖动不自由；上正下负，0 居中（自动挡排挡式） */
+.gain-column {
+    display: flex;
+    align-items: center;
+    padding-left: 9px;
+    border-left: 1px solid rgba(215, 221, 214, 0.12);
+}
+
+.gain-row {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    gap: 5px;
+    height: 180px;
+}
+
+/* 档位引导线：均分 9 档的水平细线，垫底作标尺。
+   上下各内缩 6px（= 半个把手），与把手停靠点严格对齐 */
+.gain-ticks {
+    position: absolute;
+    inset: 6px 0;
+    pointer-events: none;
+}
+
+.gain-ticks i {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    transform: translateY(-50%);
+    background: rgba(215, 221, 214, 0.08);
+}
+
+.gain-slider {
+    position: relative;
+    width: 18px;
+}
+
+.gain-slider .gain {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: block;
+    width: 180px;
+    height: 16px;
+    margin: -8px 0 0 -90px;
+    transform: rotate(-90deg);
+}
+
+.gain::-webkit-slider-runnable-track {
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(to right, var(--accent) 0 var(--gain, 50%), rgba(215, 221, 214, 0.13) var(--gain, 50%) 100%);
+}
+
+.gain::-webkit-slider-thumb {
+    width: 12px;
+    height: 12px;
+    margin-top: -4.5px;
+    appearance: none;
+    border: 0;
+    border-radius: 50%;
+    background: var(--accent);
+}
+
+/* 档位刻度：9 个标签对齐各档位停靠点，当前档高亮。
+   与引导线同一内缩，保证文字中心正对手柄位置 */
+.gain-labels {
+    position: relative;
+    width: 32px;
+    margin: 6px 0;
+}
+
+.gain-labels span {
+    position: absolute;
+    left: 0;
+    transform: translateY(-50%);
+    font-size: 11px;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+    transition: color 0.15s ease;
+}
+
+.gain-labels span.is-active {
+    color: var(--accent);
+    font-weight: 600;
+}
+
 /* 倍速弹层：hover 图标时向上展开，不占用控制栏空间，行为与音量弹层一致 */
 .speed-menu {
     opacity: 0;
@@ -109,15 +200,14 @@
    固定宽度，保证上方的百分比提示框（同宽）容得下 "100%" 不外溢 */
 .volume-popup {
     position: absolute;
-    width: 48px;
     bottom: calc(100% + 6px);
     left: 50%;
     transform: translateX(-50%) translateY(4px);
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 7px;
-    padding: 9px 8px 11px;
+    gap: 9px;
+    padding: 8px 10px;
     border: 1px solid rgba(215, 221, 214, 0.14);
     border-radius: 10px;
     background: rgba(29, 36, 30, 0.98);
@@ -176,7 +266,7 @@
 .volume-popup-slider {
     position: relative;
     width: 18px;
-    height: 84px;
+    height: 180px;
 }
 
 /* 横向滑块旋转 -90° 变为竖向：最小值在底部，向上拖动增大。
@@ -186,9 +276,9 @@
     top: 50%;
     left: 50%;
     display: block;
-    width: 84px;
+    width: 180px;
     height: 16px;
-    margin: -8px 0 0 -42px;
+    margin: -8px 0 0 -90px;
     transform: rotate(-90deg);
 }
 
@@ -198,17 +288,17 @@
     background: linear-gradient(to right, var(--accent) 0 var(--volume, 100%), rgba(215, 221, 214, 0.13) var(--volume, 100%) 100%);
 }
 
-/* 音量滑条不显示圆形滑块（把手），只保留轨道填充。
+/* 音量滑条显示圆形把手（与增益滑杆一致）。
    注意不能对 thumb 用 display:none——Chromium 里滑块会被一并移出
-   命中测试，滑条从此拖不动；改为透明占位，保留可交互区域 */
+   命中测试，滑条从此拖不动；要隐藏只能透明占位 */
 .volume::-webkit-slider-thumb {
-    width: 10px;
-    height: 10px;
-    margin-top: -3.5px;
+    width: 12px;
+    height: 12px;
+    margin-top: -4.5px;
     appearance: none;
     border: 0;
     border-radius: 50%;
-    background: transparent;
+    background: var(--accent);
 }
 
 .volume::-moz-range-track {

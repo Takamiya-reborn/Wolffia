@@ -35,6 +35,10 @@ function sendError(res, code) {
 function createMediaServer(folder) {
   const root = fs.realpathSync(folder);
   const server = http.createServer((req, res) => {
+    // Web Audio 的 createMediaElementSource 对无 CORS 头的跨源媒体强制静音：
+    // 页面源(file:// 或 dev 的 localhost:5173)与 127.0.0.1 端口跨源，
+    // 必须带 ACAO，且媒体元素需设 crossOrigin="anonymous"，否则调增益即静音
+    res.setHeader("Access-Control-Allow-Origin", "*");
     let rawPath;
     try {
       rawPath = decodeURIComponent(req.url.replace(/^\//, "").split("?")[0]);
