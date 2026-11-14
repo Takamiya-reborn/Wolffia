@@ -8,7 +8,8 @@ const { resolveLyricPath, MAX_LYRICS_BYTES } = require("./scanner.cjs");
 const LRC_LINE = /^\[(\d+):(\d+(?:\.\d+)?)\](.*)/;
 
 // (?:(\d{2}):)?(\d{2}):(\d{2}[.,]\d{3})\s+-->\s+(?:(?:\d{2}):)?\d{2}:\d{2}[.,]\d{3}(?:\s+.*)?$
-const VTT_TIMING = /^(?:(\d{2}):)?(\d{2}):(\d{2}[.,]\d{3})\s+-->\s+(?:(?:\d{2}):)?\d{2}:\d{2}[.,]\d{3}(?:\s+.*)?$/;
+const VTT_TIMING =
+  /^(?:(\d{2}):)?(\d{2}):(\d{2}[.,]\d{3})\s+-->\s+(?:(?:\d{2}):)?\d{2}:\d{2}[.,]\d{3}(?:\s+.*)?$/;
 
 function parseLrc(text) {
   const lyrics = [];
@@ -47,7 +48,8 @@ function parseVtt(text) {
         parseInt(parts[1], 10) * 60 +
         parseFloat(parts[2].replace(",", "."));
     } else {
-      start = parseInt(parts[0], 10) * 60 + parseFloat(parts[1].replace(",", "."));
+      start =
+        parseInt(parts[0], 10) * 60 + parseFloat(parts[1].replace(",", "."));
     }
 
     index += 1;

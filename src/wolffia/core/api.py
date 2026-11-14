@@ -6,8 +6,8 @@ import subprocess
 import sys
 import threading
 import time
-from pathlib import Path
 from ctypes import wintypes
+from pathlib import Path
 
 import webview
 
@@ -277,12 +277,18 @@ class PlayerApi:
                         # 值，必须改用 RestoreBounds 才能回到原始大小
                         instance._wolffia_fullscreen = True
                         instance._wolffia_state = instance.WindowState
-                        if instance._wolffia_state == WinForms.FormWindowState.Maximized:
+                        if (
+                            instance._wolffia_state
+                            == WinForms.FormWindowState.Maximized
+                        ):
                             bounds = instance.RestoreBounds
                         else:
                             bounds = instance.Bounds
                         instance._wolffia_bounds = (
-                            bounds.X, bounds.Y, bounds.Width, bounds.Height,
+                            bounds.X,
+                            bounds.Y,
+                            bounds.Width,
+                            bounds.Height,
                         )
 
                         _set_window_redraw(hwnd, False)
@@ -306,7 +312,10 @@ class PlayerApi:
                         # 内部记录的"最大化前边界"只在 Normal 状态下随 Bounds
                         # 更新，原生还原按钮用的就是这份记录
                         instance.Bounds = Rectangle(*instance._wolffia_bounds)
-                        if instance._wolffia_state == WinForms.FormWindowState.Maximized:
+                        if (
+                            instance._wolffia_state
+                            == WinForms.FormWindowState.Maximized
+                        ):
                             instance.WindowState = WinForms.FormWindowState.Maximized
                         _set_window_redraw(hwnd, True)
 

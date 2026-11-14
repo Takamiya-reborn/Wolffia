@@ -33,7 +33,12 @@ function naturalCompare(left, right) {
         // 数值相等视为相同（StrCmpLogicalW 行为），由排序稳定性兜底
         return diff ? (diff < 0 ? -1 : 1) : 0;
       }
-      const cmp = a.toLowerCase() < b.toLowerCase() ? -1 : a.toLowerCase() > b.toLowerCase() ? 1 : 0;
+      const cmp =
+        a.toLowerCase() < b.toLowerCase()
+          ? -1
+          : a.toLowerCase() > b.toLowerCase()
+            ? 1
+            : 0;
       if (cmp) return cmp;
     }
   }
@@ -63,12 +68,11 @@ function comparePaths(left, right) {
 
 // 优先匹配 audio.ext.vtt，再匹配同名 LRC/WebVTT
 function findLyrics(audioPath) {
-  const base = audioPath.slice(0, audioPath.length - path.extname(audioPath).length);
-  const candidates = [
-    `${audioPath}.vtt`,
-    `${base}.lrc`,
-    `${base}.vtt`,
-  ];
+  const base = audioPath.slice(
+    0,
+    audioPath.length - path.extname(audioPath).length,
+  );
+  const candidates = [`${audioPath}.vtt`, `${base}.lrc`, `${base}.vtt`];
   for (const candidate of candidates) {
     try {
       if (fs.statSync(candidate).isFile()) return candidate;
@@ -93,7 +97,10 @@ function walk(root, dir, out, errors) {
       // 跳过符号链接目录，避免循环
       if (entry.isSymbolicLink()) continue;
       walk(root, full, out, errors);
-    } else if (entry.isFile() && EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
+    } else if (
+      entry.isFile() &&
+      EXTENSIONS.has(path.extname(entry.name).toLowerCase())
+    ) {
       out.push(full);
     }
   }
@@ -137,4 +144,9 @@ function resolveLyricPath(root, audioRelativePath) {
   return findLyrics(audioPath);
 }
 
-module.exports = { scanFolder, resolveLyricPath, MAX_LYRICS_BYTES, naturalCompare };
+module.exports = {
+  scanFolder,
+  resolveLyricPath,
+  MAX_LYRICS_BYTES,
+  naturalCompare,
+};

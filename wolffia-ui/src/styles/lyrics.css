@@ -1,3 +1,9 @@
+/* 歌词区禁止划选(Chromium 默认可选中,拖拽会划出蓝底),与标题栏/播放列表一致 */
+#lyrics-area {
+	user-select: none;
+	-webkit-user-select: none;
+}
+
 /* 歌词背景与当前行 */
 #lyrics-bg {
 	position: absolute;

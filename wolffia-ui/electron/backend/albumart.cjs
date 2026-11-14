@@ -1,5 +1,6 @@
 const path = require("path");
 const fs = require("fs");
+const { nativeImage } = require("electron");
 
 // 与 Python api.py 的 extract_album_art 对应：
 // 仅处理常见内嵌封面格式；边长 1024 足够覆盖窗口尺寸（歌词背景是两层
@@ -24,23 +25,26 @@ function sniffImageMime(data) {
   return null;
 }
 
-async function downscaleAlbumArt(data) {
-  // 已经足够小或解码失败时返回 null（调用方回退到原始数据）
-  try {
-    const sharp = require("sharp");
-    const meta = await sharp(data).metadata();
-    if (Math.max(meta.width, meta.height) <= ALBUM_ART_MAX_EDGE) {
-      return null;
-    }
-    return await sharp(data)
-      .flatten({ background: "#000000" })
-      .resize(ALBUM_ART_MAX_EDGE, ALBUM_ART_MAX_EDGE, { fit: "inside" })
-      .jpeg({ quality: ALBUM_ART_JPEG_QUALITY })
-      .toBuffer();
-  } catch {
-    // 封面数据异常时直接用原图，宁可内存多占也不丢封面
+// 用 Electron 内置的 nativeImage（Skia）缩放，替代 21MB 的 sharp 原生依赖；
+// 解码失败返回 null（调用方回退到原始数据）
+function downscaleAlbumArt(data) {
+  const image = nativeImage.createFromBuffer(data);
+  if (image.isEmpty()) {
     return null;
   }
+  const { width, height } = image.getSize();
+  const longest = Math.max(width, height);
+  if (longest <= ALBUM_ART_MAX_EDGE) {
+    return null;
+  }
+  const scale = ALBUM_ART_MAX_EDGE / longest;
+  return image
+    .resize({
+      width: Math.round(width * scale),
+      height: Math.round(height * scale),
+      quality: "good",
+    })
+    .toJPEG(ALBUM_ART_JPEG_QUALITY);
 }
 
 // 提取内嵌专辑图并返回 data URI，无图或解析失败返回 null
@@ -58,7 +62,7 @@ async function extractAlbumArt(songPath) {
     const metadata = await mm.parseFile(songPath, { duration: false });
     const image = metadata.common.picture?.[0];
     if (image && image.data && image.data.length) {
-      const data = (await downscaleAlbumArt(image.data)) || image.data;
+      const data = downscaleAlbumArt(image.data) || image.data;
       const mime = sniffImageMime(data) || image.format;
       if (mime) {
         dataUri = `data:${mime};base64,${data.toString("base64")}`;

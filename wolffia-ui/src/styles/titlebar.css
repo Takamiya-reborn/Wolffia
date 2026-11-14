@@ -1,0 +1,111 @@
+/* Electron 自绘标题栏:frame:false 窗口的拖拽区与窗口控制。
+   默认隐藏,preload 在首帧前给 html 加 .electron 才启用;pywebview 保持原生标题栏。 */
+
+html.electron body {
+	display: flex;
+	flex-direction: column;
+}
+
+html.electron .app-shell {
+	height: auto;
+	flex: 1;
+	min-height: 0;
+}
+
+#titlebar {
+	display: none;
+}
+
+html.electron #titlebar {
+	display: flex;
+	align-items: center;
+	flex: none;
+	height: 40px;
+	padding-left: 14px;
+	/* 整条为拖拽区;窗口按钮所在 .window-controls 恢复交互 */
+	-webkit-app-region: drag;
+	user-select: none;
+	-webkit-user-select: none;
+	background: linear-gradient(180deg, #1a201a 0%, #161c16 100%);
+	border-bottom: 1px solid var(--line);
+}
+
+.tb-brand {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+}
+
+.tb-brand img {
+	width: 22px;
+	height: 22px;
+	/* 拖拽区内禁用拖鬼影 */
+	-webkit-user-drag: none;
+}
+
+.window-controls {
+	display: flex;
+	align-items: stretch;
+	height: 100%;
+	margin-left: auto;
+	-webkit-app-region: no-drag;
+}
+
+.win-btn {
+	width: 46px;
+	padding: 0;
+	border: 0;
+	display: grid;
+	place-items: center;
+	background: transparent;
+	color: #c9d1c9;
+	cursor: default;
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.win-btn svg {
+	width: 10px;
+	height: 10px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.win-btn:hover {
+	background: rgba(215, 221, 214, 0.09);
+	color: var(--text-strong);
+}
+
+.win-btn:active {
+	background: rgba(215, 221, 214, 0.14);
+}
+
+.win-close:hover {
+	background: #e81123;
+	color: #fff;
+}
+
+.win-close:active {
+	background: #c50f1f;
+	color: #fff;
+}
+
+/* 最大化/还原图标切换 */
+.ic-restore {
+	display: none;
+}
+
+#titlebar[data-maximized="true"] .ic-max {
+	display: none;
+}
+
+#titlebar[data-maximized="true"] .ic-restore {
+	display: block;
+}
+
+/* 原生全屏(主进程 window:set-fullscreen / enter-full-screen)时隐藏标题栏 */
+html.window-fullscreen #titlebar {
+	display: none;
+}

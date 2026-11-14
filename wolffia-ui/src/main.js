@@ -100,6 +100,32 @@ document.addEventListener("fullscreenchange", () => {
 	}
 });
 
+// —— Electron 自绘标题栏(pywebview 下 window.electronWindow 不存在,整段跳过)——
+const electronWindow = window.electronWindow;
+
+if (electronWindow) {
+	const titlebar = document.getElementById("titlebar");
+	document.getElementById("win-minimize").onclick = () => electronWindow.minimize();
+	document.getElementById("win-maximize").onclick = () => electronWindow.toggleMaximize();
+	document.getElementById("win-close").onclick = () => electronWindow.close();
+
+	// 拖拽区双击 = 最大化/还原(Windows 标题栏习惯);按钮自身 no-drag,不触发
+	titlebar.addEventListener("dblclick", (event) => {
+		if (!event.target.closest(".win-btn")) electronWindow.toggleMaximize();
+	});
+
+	electronWindow.onMaximizeChange((maximized) => {
+		titlebar.dataset.maximized = String(maximized);
+	});
+	electronWindow.isMaximized().then((maximized) => {
+		titlebar.dataset.maximized = String(maximized);
+	});
+	// 原生全屏时隐藏标题栏(setFullScreen 不触发 DOM fullscreenchange,由主进程回推)
+	electronWindow.onFullscreenChange((fullscreen) => {
+		document.documentElement.classList.toggle("window-fullscreen", fullscreen);
+	});
+}
+
 // —— 窗口置顶——
 let alwaysOnTop = false;
 

@@ -1,6 +1,6 @@
 const path = require("path");
 const fs = require("fs");
-const { app, BrowserWindow, dialog, ipcMain, shell } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain } = require("electron");
 
 const { createMediaServer } = require("./backend/mediaserver.cjs");
 const { scanFolder } = require("./backend/scanner.cjs");
@@ -9,8 +9,6 @@ const { extractAlbumArt } = require("./backend/albumart.cjs");
 
 const MIN_WINDOW_WIDTH = 640;
 const MIN_WINDOW_HEIGHT = 480;
-// 与 pywebview 版的 DWM 标题栏配色（titlebar.py 0x00141A14）一致
-const TITLEBAR_COLOR = "#141a14";
 
 let mainWindow = null;
 let mediaServer = null;
@@ -40,13 +38,11 @@ function createWindow() {
     minWidth: MIN_WINDOW_WIDTH,
     minHeight: MIN_WINDOW_HEIGHT,
     title: "Wolffia",
+    // 首帧就绪后再显示,避免窗口先画出无样式/空白的页面
+    show: false,
     backgroundColor: "#121712",
-    autoHideMenuBar: true,
-    titleBarOverlay: {
-      color: TITLEBAR_COLOR,
-      symbolColor: "#c9d1c9",
-      height: 36,
-    },
+    // 无边框 + 页面内自绘标题栏(titlebar 区拖拽/窗口按钮走 window:* IPC)
+    frame: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
@@ -62,6 +58,18 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
   }
 
+  mainWindow.once("ready-to-show", () => mainWindow.show());
+  // 状态回推给渲染层,驱动最大化/还原图标与全屏时隐藏标题栏
+  const sendMaximized = () =>
+    mainWindow?.webContents.send("window:maximized", mainWindow.isMaximized());
+  mainWindow.on("maximize", sendMaximized);
+  mainWindow.on("unmaximize", sendMaximized);
+  mainWindow.on("enter-full-screen", () =>
+    mainWindow?.webContents.send("window:fullscreen", true),
+  );
+  mainWindow.on("leave-full-screen", () =>
+    mainWindow?.webContents.send("window:fullscreen", false),
+  );
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
@@ -134,7 +142,13 @@ ipcMain.handle("api:open-in-explorer", (_event, relativePath) => {
   } catch {
     return false;
   }
-  return shell.showItemInFolder(songPath);
+  // 不用 shell.showItemInFolder:Electron 33+(Chromium 128)在 Windows 上
+  // 不再可靠弹出资源管理器并选中文件,直接调 explorer /select 稳定
+  require("child_process").spawn("explorer", ["/select,", songPath], {
+    detached: true,
+    stdio: "ignore",
+  }).unref();
+  return true;
 });
 
 ipcMain.handle("api:show-properties", async (_event, relativePath) => {
@@ -151,15 +165,23 @@ ipcMain.handle("api:show-properties", async (_event, relativePath) => {
   const dir = path.dirname(songPath);
   const name = path.basename(songPath);
   const script = [
-    "$n = (New-Object -ComObject Shell.Application).NameSpace('" + dir.replace(/'/g, "''") + "')",
-    "if ($n) { $p = $n.ParseName('" + name.replace(/'/g, "''") + "'); if ($p) { $p.InvokeVerb('properties') } }",
+    "$n = (New-Object -ComObject Shell.Application).NameSpace('" +
+      dir.replace(/'/g, "''") +
+      "')",
+    "if ($n) { $p = $n.ParseName('" +
+      name.replace(/'/g, "''") +
+      "'); if ($p) { $p.InvokeVerb('properties') } }",
   ].join("; ");
   const { spawn } = require("child_process");
-  const child = spawn("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], {
-    windowsHide: true,
-    detached: true,
-    stdio: "ignore",
-  });
+  const child = spawn(
+    "powershell",
+    ["-NoProfile", "-NonInteractive", "-Command", script],
+    {
+      windowsHide: true,
+      detached: true,
+      stdio: "ignore",
+    },
+  );
   child.unref();
   return true;
 });
@@ -175,6 +197,20 @@ ipcMain.handle("window:set-always-on-top", (_event, enabled) => {
   }
   return false;
 });
+
+// 自绘标题栏的窗口控制
+ipcMain.handle("window:minimize", () => mainWindow?.minimize());
+ipcMain.handle("window:toggle-maximize", () => {
+  if (!mainWindow) return false;
+  if (mainWindow.isMaximized()) {
+    mainWindow.unmaximize();
+  } else {
+    mainWindow.maximize();
+  }
+  return mainWindow.isMaximized();
+});
+ipcMain.handle("window:close", () => mainWindow?.close());
+ipcMain.handle("window:is-maximized", () => Boolean(mainWindow?.isMaximized()));
 
 ipcMain.handle("window:set-fullscreen", (_event, enabled) => {
   if (mainWindow) {

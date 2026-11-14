@@ -4,9 +4,39 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Wolffia</title>
+    <!-- dev 模式下 CSS 走 main.js 的模块注入,首帧会闪裸 HTML;此处
+         显式声明成阻塞样式,Vite 构建时会与 JS import 去重为同一产物 -->
+    <link rel="stylesheet" href="/src/style.css" />
+    <!-- Electron(preload 暴露 electronWindow)时启用自绘标题栏;须在首帧前打标记 -->
+    <script>
+      if (window.electronWindow) document.documentElement.classList.add("electron");
+    </script>
   </head>
 
   <body>
+    <!-- Electron 自绘标题栏(pywebview 下由 CSS 隐藏,走原生标题栏) -->
+    <header id="titlebar" data-maximized="false" aria-hidden="true">
+      <div class="tb-brand">
+        <img src="/wolffia-mark.png" alt="" draggable="false" />
+      </div>
+      <div class="window-controls">
+        <button id="win-minimize" class="win-btn" type="button" tabindex="-1" aria-label="最小化">
+          <svg viewBox="0 0 10 10"><path d="M0 5.5 H10" /></svg>
+        </button>
+        <button id="win-maximize" class="win-btn" type="button" tabindex="-1" aria-label="最大化">
+          <svg class="ic-max" viewBox="0 0 10 10">
+            <rect x="0.5" y="0.5" width="9" height="9" />
+          </svg>
+          <svg class="ic-restore" viewBox="0 0 10 10">
+            <rect x="0.5" y="2.5" width="7" height="7" />
+            <path d="M2.5 2.5 V0.5 H9.5 V7.5 H7.5" />
+          </svg>
+        </button>
+        <button id="win-close" class="win-btn win-close" type="button" tabindex="-1" aria-label="关闭">
+          <svg viewBox="0 0 10 10"><path d="M0 0 L10 10 M10 0 L0 10" /></svg>
+        </button>
+      </div>
+    </header>
     <main class="app-shell flex h-screen min-h-0">
       <aside
         id="list"

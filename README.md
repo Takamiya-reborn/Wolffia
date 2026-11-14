@@ -1,7 +1,9 @@
 <div align="center">
-  
+
+<img src="assets/icon.png" width="96" alt="Wolffia 图标" />
+
 # Wolffia
-  
+
 </div>
 <div align="center">
 
@@ -98,6 +100,7 @@ Wolffia/
 ├── scripts/
 │   ├── install.ps1 / install.sh # 安装前后端依赖
 │   ├── run.ps1 / run.sh         # 启动播放器，可选先构建前端
+│   ├── electron-dev.ps1 / .sh   # Electron 开发环境一键启动（后台 Vite + Electron）
 │   ├── release.ps1              # 调用各打包脚本并把产物整理到 release/（PowerShell）
 │   └── release.sh               # 调用各打包脚本并把产物整理到 release/（Bash）
 ├── wolffia-ui/                   # 前端源码项目
@@ -270,12 +273,16 @@ uv run python -m PyInstaller --onefile --noconsole --name wolffia --add-data "sr
 npm run build:electron
 ```
 
-会先构建前端，再用 electron-builder 打出 NSIS 安装包（`dist-electron/Wolffia-<版本>-electron-setup.exe`）。这条发布线不依赖 Python：扫描、歌词、封面和媒体服务由 `electron/backend/` 下的 Node 实现完成，安装包开箱即用。开发调试可用：
+会先构建前端，再用 electron-builder 打出 NSIS 安装包（`dist-electron/Wolffia-<版本>-electron-setup.exe`）。这条发布线不依赖 Python：扫描、歌词、封面和媒体服务由 `electron/backend/` 下的 Node 实现完成，安装包开箱即用。
+
+开发调试用一条命令（自动后台启动 Vite、等就绪后拉起 Electron，退出时自动清理）：
 
 ```powershell
-cd wolffia-ui
-npm run dev        # 终端 1：Vite 开发服务器
-npm run electron:dev   # 终端 2：Electron 连接开发服务器
+.\scripts\electron-dev.ps1
+```
+
+```bash
+./scripts/electron-dev.sh
 ```
 
 ## 发布 Release

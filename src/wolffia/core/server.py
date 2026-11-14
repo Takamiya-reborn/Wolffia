@@ -46,9 +46,10 @@ class RangeHandler(BaseHTTPRequestHandler):
             return
 
         size = os.path.getsize(full_path)
-        content_type = _MEDIA_MIME_TYPES.get(
-            os.path.splitext(full_path)[1].lower()
-        ) or mimetypes.guess_type(full_path)[0]
+        content_type = (
+            _MEDIA_MIME_TYPES.get(os.path.splitext(full_path)[1].lower())
+            or mimetypes.guess_type(full_path)[0]
+        )
         range_header = self.headers.get("Range")
 
         start, end = 0, size - 1
