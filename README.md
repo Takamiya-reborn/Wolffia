@@ -39,6 +39,7 @@ Wolffia 面向个人本地音乐库，重点是打开即用：选择音乐文件
 - 使用本机 HTTP Range 服务读取音频，适合大文件播放
 - 可打包单个 Windows `.exe`，免安装
 - 如果担心程序经常读写磁盘Temp消耗磁盘寿命，就使用带目录文件打包后的
+- 另有 Electron 安装包发布线：后端能力由 Node 复刻、不含 Python，渲染基于 Electron 内置 Chromium；介意包体的话继续用 PyInstaller/Nuitka 产物
 
 ## 快捷键
 
@@ -72,10 +73,12 @@ Wolffia 面向个人本地音乐库，重点是打开即用：选择音乐文件
 
 ### 构建
 
-| 技术                                                                                                  | 用途                                                              |
-| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| ![PyInstaller](https://img.shields.io/badge/PyInstaller-Packaging-3D3D3D?logo=python&logoColor=white) | 将 Python 程序、前端静态文件和运行时依赖打包为 Windows 可执行文件 |
-| ![Nuitka](https://img.shields.io/badge/Nuitka-Compiler-4B8BBE?logo=python&logoColor=white)            | 将 Python 程序编译并打包为 Windows 可执行文件                     |
+| 技术                                                                                                               | 用途                                                              |
+| ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| ![PyInstaller](https://img.shields.io/badge/PyInstaller-Packaging-3D3D3D?logo=python&logoColor=white)              | 将 Python 程序、前端静态文件和运行时依赖打包为 Windows 可执行文件 |
+| ![Nuitka](https://img.shields.io/badge/Nuitka-Compiler-4B8BBE?logo=python&logoColor=white)                         | 将 Python 程序编译并打包为 Windows 可执行文件                     |
+| ![Electron](https://img.shields.io/badge/Electron-Shell-47848F?logo=electron&logoColor=white)                      | 独立的 Electron 发布线，后端能力用 Node 复刻，不含 Python         |
+| ![electron-builder](https://img.shields.io/badge/electron--builder-Packaging-3D3D3D?logo=electron&logoColor=white) | 将 Electron 应用打包为 NSIS 安装包                                |
 
 ## 项目结构
 
@@ -88,14 +91,24 @@ Wolffia/
 ├── wolffia-onefile.spec          # PyInstaller 单文件模式配置
 ├── nuitka-standalone.ps1        # Nuitka 目录模式打包脚本
 ├── nuitka-onefile.ps1           # Nuitka 单文件模式打包脚本
+├── pyinstaller-onefile.ps1      # PyInstaller 单文件模式打包脚本（使用 spec 文件）
+├── pyinstaller-onedir.ps1       # PyInstaller 目录模式打包脚本（使用 spec 文件）
+├── electron-nsis.ps1            # Electron NSIS 安装包打包脚本
+├── electron-portable.ps1        # Electron 便携版打包脚本
 ├── scripts/
 │   ├── install.ps1 / install.sh # 安装前后端依赖
 │   ├── run.ps1 / run.sh         # 启动播放器，可选先构建前端
-│   ├── release.ps1              # 构建、打包产物并发布 GitHub Release（PowerShell）
-│   └── release.sh               # 构建、打包产物并发布 GitHub Release（Bash）
+│   ├── release.ps1              # 调用各打包脚本并把产物整理到 release/（PowerShell）
+│   └── release.sh               # 调用各打包脚本并把产物整理到 release/（Bash）
 ├── wolffia-ui/                   # 前端源码项目
-│   ├── package.json              # npm 脚本和前端依赖
-│   ├── vite.config.js            # Vite 配置，输出到 ../src/wolffia/ui
+│   ├── package.json              # npm 脚本、前端依赖和 electron-builder 配置
+│   ├── vite.config.js            # Vite 配置，npm run build 产出 dist 与 ../src/wolffia/ui
+│   ├── electron/                 # Electron 发布线（后端能力用 Node 复刻）
+│   │   ├── main.cjs              # 窗口生命周期、IPC 与 shell 集成
+│   │   ├── preload.cjs           # window.pywebview.api 兼容垫片
+│   │   └── backend/              # 扫描、歌词、封面、Range 媒体服务的 Node 实现
+│   ├── dist/                     # Electron 线消费的构建产物
+│   ├── dist-electron/            # electron-builder 输出（NSIS 安装包）
 │   └── src/
 │       ├── main.js               # 播放列表、音频播放和应用状态
 │       ├── js/                   # 歌词、DOM 和图标等前端逻辑
@@ -118,14 +131,14 @@ Wolffia/
 └── nuitka/                       # Nuitka 目录模式和单文件构建输出
 ```
 
-运行流程如下：开发或发布前先在 `wolffia-ui/` 中执行 `npm run build`，将前端构建产物写入 `src/wolffia/ui/`；Python 启动 `pywebview` 窗口并加载其中的 `index.html`。用户选择音乐目录后，Python 递归扫描音频并按相对路径生成目录树，在每个音频所在目录查找同名歌词文件，然后在 `127.0.0.1` 的动态端口启动本地服务；前端默认折叠目录，并在用户展开时懒加载子节点，通过该服务加载音频和歌词。
+运行流程如下：开发或发布前先在 `wolffia-ui/` 中执行 `npm run build`，前端产物直接构建到两个目录（`wolffia-ui/dist/` 供 Electron 线使用，`src/wolffia/ui/` 供 Python 线打包嵌入）。Python 启动 `pywebview` 窗口并加载其中的 `index.html`；Electron 线加载同一份前端，由 `electron/backend/` 用 Node 复刻扫描、歌词解析、封面提取和 Range 媒体服务，并通过 preload 垫片提供与 Python 版相同的 `window.pywebview.api` 接口，前端代码零改动。用户选择音乐目录后，后端递归扫描音频并按相对路径生成目录树，在每个音频所在目录查找同名歌词文件，然后在 `127.0.0.1` 的动态端口启动本地服务；前端默认折叠目录，并在用户展开时懒加载子节点，通过该服务加载音频和歌词。
 
 ## 环境要求
 
 - Windows 桌面环境
 - [Python](https://www.python.org/) `>= 3.13`
 - [uv](https://docs.astral.sh/uv/)
-- [Node.js](https://nodejs.org/) 和 npm（仅在修改或重新构建前端时需要）
+- [Node.js](https://nodejs.org/) 和 npm（修改前端或构建 Electron 版时需要）
 - C/C++ 编译器（Nuitka需要将python转换成C/C++，然后编译）
   > 注：如果没有，首次打包会自行下载C/C++编译器
 
@@ -249,11 +262,27 @@ uv run python -m PyInstaller --onefile --noconsole --name wolffia --add-data "sr
 
 两个脚本都会使用 Nuitka 编译 Python 程序，将 `src/wolffia/ui/` 作为 `ui` 数据目录嵌入，并关闭控制台窗口。目录模式的构建结果位于 `nuitka/standalone/`，单文件模式的构建结果位于 `nuitka/onefile/`。
 
+### 使用 Electron
+
+在 `wolffia-ui/` 目录执行：
+
+```powershell
+npm run build:electron
+```
+
+会先构建前端，再用 electron-builder 打出 NSIS 安装包（`dist-electron/Wolffia-<版本>-electron-setup.exe`）。这条发布线不依赖 Python：扫描、歌词、封面和媒体服务由 `electron/backend/` 下的 Node 实现完成，安装包开箱即用。开发调试可用：
+
+```powershell
+cd wolffia-ui
+npm run dev        # 终端 1：Vite 开发服务器
+npm run electron:dev   # 终端 2：Electron 连接开发服务器
+```
+
 ## 发布 Release
 
-`scripts/` 下的发布脚本会自动完成：读取 `pyproject.toml` 中的版本号、运行四种打包（Nuitka/PyInstaller 的单文件与目录模式）、将产物整理到 `release/` 目录，并上传到 GitHub Release。
+`scripts/` 下的发布脚本会自动完成：把必填的版本号参数写入 `pyproject.toml` 与 `wolffia-ui/package.json`、调用各打包脚本（Electron 的 NSIS 安装包与便携版，Nuitka/PyInstaller 的单文件、目录模式）、将产物整理到 `release/` 目录。脚本不含发布步骤，需要发布时自行执行 `gh release create <tag> release/*`。
 
-发布说明写在根目录的 `release-notes.md` 中（不纳入 git 跟踪），存在时作为 Release notes 上传，不存在时由 GitHub 自动生成。
+打包细节（编译参数、spec 文件等）都在仓库根目录的各打包脚本中：`nuitka-standalone.ps1`、`nuitka-onefile.ps1`、`pyinstaller-onefile.ps1`、`pyinstaller-onedir.ps1`、`electron-nsis.ps1`、`electron-portable.ps1`，发布脚本只负责调用与整理结果。
 
 产物命名（以 `0.1.7` 为例）：
 
@@ -262,29 +291,22 @@ Wolffia_v0.1.7_nuitka_onefile.exe
 Wolffia_v0.1.7_nuitka_standalone.zip
 Wolffia_v0.1.7_pyi_onefile.exe
 Wolffia_v0.1.7_pyi_onedir.zip
-```
-
-发布前需要安装 [GitHub CLI](https://cli.github.com/) 并完成登录：
-
-```powershell
-winget install GitHub.cli
-gh auth login
+Wolffia_v0.1.7_electron_setup.exe
+Wolffia_v0.1.7_electron_portable.exe
 ```
 
 Windows PowerShell：
 
 ```powershell
-.\scripts\release.ps1                # 完整流程：构建 + 打包 + 发布
-.\scripts\release.ps1 -DryRun        # 只构建和打包，不发布
-.\scripts\release.ps1 -SkipBuild     # 跳过构建，用已有产物打包并发布
+.\scripts\release.ps1 0.1.7            # 完整流程：写入版本号 + 构建 + 打包 + 整理
+.\scripts\release.ps1 0.1.7 -SkipBuild # 跳过构建，用已有产物整理
 ```
 
 Linux Bash / Git Bash：
 
 ```bash
-./scripts/release.sh                 # 完整流程
-./scripts/release.sh --dry-run       # 只构建和打包，不发布
-./scripts/release.sh --skip-build    # 跳过构建，用已有产物打包并发布
+./scripts/release.sh 0.1.7             # 完整流程
+./scripts/release.sh 0.1.7 --skip-build # 跳过构建，用已有产物整理
 ```
 
 `release/` 目录每次运行都会清空重建，且不纳入 git 跟踪。

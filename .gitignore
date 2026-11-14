@@ -40,3 +40,6 @@ logs/
 release/
 # Release notes(每次发布临时写)
 release-notes.md
+
+# Electron 打包输出
+dist-electron/
