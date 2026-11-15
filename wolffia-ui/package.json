@@ -2,6 +2,10 @@
   "name": "wolffia-ui",
   "version": "0.1.8",
   "description": "Wolffia 本地音乐播放器的桌面前端，支持同步歌词显示",
+  "author": {
+    "name": "Takamiya-reborn",
+    "email": "wzy.research@outlook.com"
+  },
   "private": true,
   "type": "module",
   "main": "electron/main.cjs",
