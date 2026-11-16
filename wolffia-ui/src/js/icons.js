@@ -20,6 +20,7 @@ import {
 	Maximize,
 	Minimize,
 	PanelLeft,
+	SquareArrowOutUpRight,
 	Minus,
 	Plus,
 	createIcons,
@@ -48,6 +49,7 @@ export const lucideIcons = {
 	Maximize,
 	Minimize,
 	PanelLeft,
+	SquareArrowOutUpRight,
 	Minus,
 	Plus,
 };

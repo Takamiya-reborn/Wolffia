@@ -9,7 +9,8 @@
     <link rel="stylesheet" href="/src/style.css" />
     <!-- Electron(preload 暴露 electronWindow)时启用自绘标题栏;须在首帧前打标记 -->
     <script>
-      if (window.electronWindow) document.documentElement.classList.add("electron");
+      if (window.electronWindow)
+        document.documentElement.classList.add("electron");
     </script>
   </head>
 
@@ -20,10 +21,22 @@
         <img src="/wolffia-mark.png" alt="" draggable="false" />
       </div>
       <div class="window-controls">
-        <button id="win-minimize" class="win-btn" type="button" tabindex="-1" aria-label="最小化">
+        <button
+          id="win-minimize"
+          class="win-btn"
+          type="button"
+          tabindex="-1"
+          aria-label="最小化"
+        >
           <svg viewBox="0 0 10 10"><path d="M0 5.5 H10" /></svg>
         </button>
-        <button id="win-maximize" class="win-btn" type="button" tabindex="-1" aria-label="最大化">
+        <button
+          id="win-maximize"
+          class="win-btn"
+          type="button"
+          tabindex="-1"
+          aria-label="最大化"
+        >
           <svg class="ic-max" viewBox="0 0 10 10">
             <rect x="0.5" y="0.5" width="9" height="9" />
           </svg>
@@ -32,7 +45,13 @@
             <path d="M2.5 2.5 V0.5 H9.5 V7.5 H7.5" />
           </svg>
         </button>
-        <button id="win-close" class="win-btn win-close" type="button" tabindex="-1" aria-label="关闭">
+        <button
+          id="win-close"
+          class="win-btn win-close"
+          type="button"
+          tabindex="-1"
+          aria-label="关闭"
+        >
           <svg viewBox="0 0 10 10"><path d="M0 0 L10 10 M10 0 L0 10" /></svg>
         </button>
       </div>
@@ -40,7 +59,7 @@
     <main class="app-shell flex h-full min-h-0">
       <aside
         id="list"
-        class="hairline-r flex min-w-0 flex-col overflow-hidden bg-[linear-gradient(180deg,rgba(28,34,28,0.72)_0%,rgba(18,23,18,0.6)_100%)] px-0 pb-5 pt-4"
+        class="hairline-r flex min-w-0 flex-col overflow-hidden bg-[linear-gradient(180deg,rgba(28,34,28,0.72)_0%,rgba(18,23,18,0.6)_100%)] px-0 pt-4"
       >
         <header
           class="hairline-b flex h-11.75 shrink-0 items-center gap-2.5 pr-3 pl-4"
@@ -68,6 +87,21 @@
           >
         </header>
         <div id="songs" class="min-h-0 flex-1 overflow-y-auto pb-3"></div>
+        <a
+          id="list-footer"
+          class="hairline-t"
+          href="https://github.com/Takamiya-reborn/Wolffia/issues"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="https://github.com/Takamiya-reborn/Wolffia/issues"
+        >
+          <i
+            data-lucide="square-arrow-out-up-right"
+            class="block h-3.5 w-3.5 shrink-0"
+            aria-hidden="true"
+          ></i>
+          <span>前往提交 issue</span>
+        </a>
         <div id="songs-scrollbar" aria-hidden="true">
           <div id="songs-scrollbar-thumb"></div>
         </div>

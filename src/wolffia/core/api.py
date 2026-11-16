@@ -6,6 +6,7 @@ import subprocess
 import sys
 import threading
 import time
+import webbrowser
 from ctypes import wintypes
 from pathlib import Path
 
@@ -430,3 +431,10 @@ class PlayerApi:
         return bool(
             ctypes.windll.shell32.SHObjectProperties(None, 2, os.fspath(path), None)
         )
+
+    def open_url(self, url):
+        # 外链（列表底部问题反馈）交系统默认浏览器，不在应用内开窗
+        if not isinstance(url, str) or not url.startswith(("http://", "https://")):
+            return False
+        webbrowser.open(url)
+        return True

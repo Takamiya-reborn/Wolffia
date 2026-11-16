@@ -77,7 +77,7 @@ body.is-resizing-list {
 #songs-scrollbar {
 	position: absolute;
 	top: 63px; /* aside pt-4(16px) + 列表头 h-11.75(47px) */
-	bottom: 0;
+	bottom: 28px; /* 底部链接 h-7(28px)：对齐 #songs 底缘 */
 	right: 2px;
 	z-index: 15;
 	width: 14px;
@@ -113,6 +113,26 @@ body.is-resizing-list {
 #songs-scrollbar-thumb.is-dragging {
 	background: var(--accent);
 	cursor: grabbing;
+}
+
+/* 列表底部仓库链接：占据 aside 底部留白；点击由 main.js 转系统浏览器 */
+#list-footer {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	gap: 5px;
+	height: 28px;
+	color: var(--faint);
+	font-size: 13px; /* 与列表行一致 */
+	text-decoration: none;
+	transition: color 0.15s ease;
+}
+
+#list-footer:hover,
+#list-footer:focus-visible {
+	outline: 0;
+	color: var(--text-strong);
 }
 
 .song-context-menu {

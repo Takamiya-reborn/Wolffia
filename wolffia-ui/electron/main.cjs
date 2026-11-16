@@ -1,7 +1,7 @@
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
-const { app, BrowserWindow, dialog, ipcMain } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain, shell } = require("electron");
 
 // 无残留运行：Chromium 的 Local Storage / Cache / GPUCache 默认落在
 // %APPDATA%/<app>，统一重定向到本次启动的临时目录，退出时整体删除
@@ -204,6 +204,13 @@ ipcMain.handle("api:show-properties", async (_event, relativePath) => {
 
 ipcMain.handle("api:close-static-server", () => {
   closeMediaServer();
+});
+
+// 外链走系统浏览器，不在应用内开新窗口；只放行 http(s)
+ipcMain.handle("api:open-url", (_event, url) => {
+  if (typeof url !== "string" || !/^https?:\/\//i.test(url)) return false;
+  shell.openExternal(url);
+  return true;
 });
 
 ipcMain.handle("window:set-always-on-top", (_event, enabled) => {

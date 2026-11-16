@@ -4,6 +4,7 @@ export const dom = {
 	list: document.getElementById("list"),
 	listResizer: document.getElementById("list-resizer"),
 	listCollapseToggle: document.getElementById("list-collapse-toggle"),
+	listFooter: document.getElementById("list-footer"),
 	volume: document.getElementById("volume"),
 	volumeValue: document.getElementById("volume-value"),
 	volumeControl: document.getElementById("volume-control"),

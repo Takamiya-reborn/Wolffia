@@ -35,7 +35,7 @@ let shuffleQueue = [];
 let artworkMode = false;
 let videoMode = false;
 
-const { media, list, listResizer, listCollapseToggle, volume, volumeValue, volumeControl, volumePopup, duration, progress, lyricsBg, lyricsArea, lyricsArtToggle, pinToggle, fullscreenToggle,
+const { media, list, listResizer, listCollapseToggle, listFooter, volume, volumeValue, volumeControl, volumePopup, duration, progress, lyricsBg, lyricsArea, lyricsArtToggle, pinToggle, fullscreenToggle,
 	lyricsWrapper: wrapper, lyricsContainer, playToggle, muteToggle, currentTime, playlist, playlistCount, playlistName,
 	songsScrollbar, songsScrollbarThumb,
 	loopModeToggle, songContextMenu, titleContextMenu, playbackRateMenu,
@@ -202,6 +202,18 @@ function setListCollapsed(collapsed) {
 }
 
 listCollapseToggle.onclick = () => setListCollapsed(!listCollapsed);
+
+// 底部问题反馈链接交系统浏览器打开：pywebview/Electron 里 target=_blank
+// 会变成应用内弹窗，拦截后走 open_url（preload 转发，与后端方法名一致）
+listFooter.onclick = (event) => {
+	event.preventDefault();
+	const url = listFooter.href;
+	if (window.pywebview?.api?.open_url) {
+		window.pywebview.api.open_url(url).catch(() => { });
+	} else {
+		window.open(url, "_blank", "noopener,noreferrer");
+	}
+};
 
 
 function setTitle(text) {
