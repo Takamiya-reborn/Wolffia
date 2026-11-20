@@ -547,6 +547,7 @@ lyricsArea.ondblclick = async (event) => {
 			setVideoMode(false);
 			lyrics.render([]);
 			lyricsArea.classList.add("is-no-art");
+			lyricsArea.classList.remove("is-unpicked");
 			setArtworkMode(artworkMode);
 			lyricsBg.classList.remove("is-visible");
 			lyricsBg.style.backgroundImage = "";

@@ -4,6 +4,24 @@
 	-webkit-user-select: none;
 }
 
+/* 未选择目录时的空状态提示；选中目录后 JS 移除 is-unpicked 隐藏 */
+.lyrics-empty-hint {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	display: grid;
+	place-items: center;
+	color: var(--faint);
+	font-size: 17px;
+	letter-spacing: 0.04em;
+	opacity: 0;
+	pointer-events: none;
+}
+
+#lyrics-area.is-unpicked .lyrics-empty-hint {
+	opacity: 1;
+}
+
 /* 歌词背景与当前行 */
 #lyrics-bg {
 	position: absolute;

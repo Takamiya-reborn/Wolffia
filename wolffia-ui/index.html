@@ -152,14 +152,18 @@
             id="current-title"
             class="m-0 min-w-0 flex-1 overflow-hidden text-[clamp(17px,2vw,22px)] font-semibold tracking-[-0.02em]"
           >
-            <span id="title-text" class="title-text">双击选择文件夹</span>
+            <span id="title-text" class="title-text">未选择</span>
           </h2>
         </header>
         <div
           id="lyrics-area"
-          class="relative -mx-10 min-h-0 w-[calc(100%+80px)] flex-1 self-stretch overflow-hidden max-[760px]:-mx-5.5 max-[760px]:w-[calc(100%+44px)]"
+          class="is-unpicked relative -mx-10 min-h-0 w-[calc(100%+80px)] flex-1 self-stretch overflow-hidden max-[760px]:-mx-5.5 max-[760px]:w-[calc(100%+44px)]"
         >
           <div id="lyrics-bg" class="lyrics-bg" aria-hidden="true"></div>
+          <!-- 未选择目录时的空状态提示；选中目录后由 JS 移除 is-unpicked 隐藏 -->
+          <div id="lyrics-empty-hint" class="lyrics-empty-hint" aria-hidden="true">
+            双击此处打开目录
+          </div>
           <div
             id="lyrics-art-empty"
             class="lyrics-art-empty"
