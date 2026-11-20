@@ -66,21 +66,17 @@
 	/* 淡出必须瞬时：退出专辑图模式时歌词立即可见，渐隐会和歌词重叠 */
 }
 
+/* 尺寸与描边对齐播放列表头部的图标框（h-7 w-7 rounded-[9px]），观感统一 */
 .lyrics-art-toggle {
-	position: absolute;
-	top: 16px;
-	right: 62px;
-	z-index: 2;
 	display: grid;
-	width: 34px;
-	height: 34px;
+	width: 28px;
+	height: 28px;
 	place-items: center;
 	padding: 0;
-	border: 1px solid rgba(215, 221, 214, 0.16);
+	border: 1px solid rgba(169, 201, 160, 0.16);
 	border-radius: 9px;
-	background: rgba(18, 23, 18, 0.42);
+	background: rgba(169, 201, 160, 0.1);
 	color: var(--muted);
-	backdrop-filter: blur(8px);
 	cursor: pointer;
 	opacity: 0.78;
 	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
@@ -91,15 +87,26 @@
 	height: 16px;
 }
 
-/* pin 按钮复用 lyrics-art-toggle 的外观，排在专辑图开关右侧 */
-.window-pin-toggle {
+/* 专辑图/置顶按钮收纳在标题栏右端；
+   绝对定位避免挤偏居中的歌名，right 20px 延续原歌词区位置 */
+.header-actions {
+	position: absolute;
+	top: 50%;
 	right: 20px;
+	z-index: 2;
+	display: flex;
+	flex-shrink: 0;
+	gap: 8px;
+	transform: translateY(-50%);
 }
 
-/* 列表收起按钮复用同一外观，悬浮在歌词区左上角 */
+/* 收起列表按钮对应列表所在的一侧，贴标题栏左端 */
 .list-collapse-toggle {
-	right: auto;
+	position: absolute;
+	top: 50%;
 	left: 20px;
+	z-index: 2;
+	transform: translateY(-50%);
 }
 
 #lyrics-art-toggle .icon-image-off {
@@ -135,12 +142,10 @@
 }
 
 /* 列表收起与否用户肉眼可见，按钮不做变色状态；
-   仅保留悬停反馈，按住 aria-pressed 供读屏使用 */
+   仅保留悬停反馈，按住 aria-pressed 供读屏使用（收起时底色退掉一点） */
 .list-collapse-toggle[aria-pressed="true"] {
-	border-color: rgba(215, 221, 214, 0.16);
-	background: rgba(18, 23, 18, 0.42);
-	color: var(--muted);
-	opacity: 0.78;
+	background: rgba(169, 201, 160, 0.04);
+	opacity: 0.6;
 }
 
 .lyrics-art-toggle:focus-visible {
@@ -198,7 +203,8 @@
 	visibility: hidden;
 }
 
-/* 专辑图开关在视频模式下无意义，隐藏；置顶按钮保留 */
-#lyrics-area.is-video-mode #lyrics-art-toggle {
+/* 专辑图开关在视频模式下无意义，隐藏；置顶按钮保留。
+   按钮已移入标题栏，状态类同步打到 player-header 上 */
+#player-header.is-video-mode #lyrics-art-toggle {
 	display: none;
 }

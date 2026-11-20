@@ -91,6 +91,8 @@ function isVideoPath(path) {
 function setVideoMode(enabled) {
 	videoMode = enabled;
 	lyricsArea.classList.toggle("is-video-mode", enabled);
+	// 专辑图开关移到了标题栏，视频态也要打到 header 上才能隐藏它
+	playerHeader.classList.toggle("is-video-mode", enabled);
 	// 全屏入口只对视频开放，音乐与空状态时禁用；
 	// 歌单自动切到音乐时顺带退出全屏，避免黑屏全屏残留
 	fullscreenToggle.disabled = !enabled;

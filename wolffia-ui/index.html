@@ -143,7 +143,7 @@
       >
         <header
           id="player-header"
-          class="hairline-b -mx-10 flex h-11.75 w-[calc(100%+80px)] shrink-0 self-stretch items-center justify-center gap-2.5 px-10 max-[760px]:-mx-5.5 max-[760px]:w-[calc(100%+44px)] max-[760px]:px-5.5"
+          class="hairline-b -mx-10 flex h-11.75 w-[calc(100%+80px)] shrink-0 self-stretch items-center justify-center gap-2.5 pl-16 pr-10 max-[760px]:-mx-5.5 max-[760px]:w-[calc(100%+44px)] max-[760px]:px-5.5 max-[760px]:pl-[58px]"
         >
           <div class="eq-icon" aria-hidden="true">
             <span></span><span></span><span></span>
@@ -154,6 +154,49 @@
           >
             <span id="title-text" class="title-text">未选择</span>
           </h2>
+          <!-- 收起列表按钮在标题栏左端，专辑图/置顶两个在右侧 -->
+          <button
+            id="list-collapse-toggle"
+            class="lyrics-art-toggle list-collapse-toggle"
+            type="button"
+            aria-pressed="false"
+            aria-label="收起播放列表"
+            title="收起播放列表"
+          >
+            <i data-lucide="panel-left" aria-hidden="true"></i>
+          </button>
+          <!-- 专辑图/置顶按钮收纳在标题栏右端，绝对定位避免挤偏居中的歌名 -->
+          <div id="header-actions" class="header-actions">
+            <button
+              id="lyrics-art-toggle"
+              class="lyrics-art-toggle"
+              type="button"
+              aria-label="显示专辑图"
+              title="显示专辑图"
+            >
+              <i data-lucide="image" class="icon-image" aria-hidden="true"></i>
+              <i
+                data-lucide="image-off"
+                class="icon-image-off"
+                aria-hidden="true"
+              ></i>
+            </button>
+            <button
+              id="window-pin-toggle"
+              class="lyrics-art-toggle window-pin-toggle"
+              type="button"
+              aria-pressed="false"
+              aria-label="窗口置顶"
+              title="窗口置顶"
+            >
+              <i data-lucide="pin" class="icon-pin" aria-hidden="true"></i>
+              <i
+                data-lucide="pin-off"
+                class="icon-pin-off"
+                aria-hidden="true"
+              ></i>
+            </button>
+          </div>
         </header>
         <div
           id="lyrics-area"
@@ -171,45 +214,6 @@
           >
             暂无专辑图
           </div>
-          <button
-            id="list-collapse-toggle"
-            class="lyrics-art-toggle list-collapse-toggle"
-            type="button"
-            aria-pressed="false"
-            aria-label="收起播放列表"
-            title="收起播放列表"
-          >
-            <i data-lucide="panel-left" aria-hidden="true"></i>
-          </button>
-          <button
-            id="lyrics-art-toggle"
-            class="lyrics-art-toggle"
-            type="button"
-            aria-label="显示专辑图"
-            title="显示专辑图"
-          >
-            <i data-lucide="image" class="icon-image" aria-hidden="true"></i>
-            <i
-              data-lucide="image-off"
-              class="icon-image-off"
-              aria-hidden="true"
-            ></i>
-          </button>
-          <button
-            id="window-pin-toggle"
-            class="lyrics-art-toggle window-pin-toggle"
-            type="button"
-            aria-pressed="false"
-            aria-label="窗口置顶"
-            title="窗口置顶"
-          >
-            <i data-lucide="pin" class="icon-pin" aria-hidden="true"></i>
-            <i
-              data-lucide="pin-off"
-              class="icon-pin-off"
-              aria-hidden="true"
-            ></i>
-          </button>
           <div
             id="lyrics-container"
             class="absolute inset-0 overflow-hidden text-center mask-[linear-gradient(transparent,black_18%,black_82%,transparent)]"
