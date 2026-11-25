@@ -1,4 +1,39 @@
 /* 播放控制、滑块与菜单 */
+.playback-rate-indicator {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border: 1px solid rgba(215, 221, 214, 0.14);
+    border-radius: 8px;
+    background: rgba(29, 36, 30, 0.98);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    color: var(--text-strong);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, 4px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 20;
+}
+
+.playback-rate-indicator svg {
+    width: 16px;
+    height: 16px;
+    color: var(--muted);
+}
+
+.playback-rate-indicator.is-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
 .play-toggle .icon-pause {
     display: none;
 }

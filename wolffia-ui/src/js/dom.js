@@ -32,6 +32,7 @@ export const dom = {
 	titleContextMenu: document.getElementById("title-context-menu"),
 	playbackRateMenu: document.getElementById("playback-rate-menu"),
 	playbackRateToggle: document.getElementById("playback-rate-toggle"),
+	playbackRateIndicator: document.getElementById("playback-rate-indicator"),
 	playbackRateOptions: [...document.querySelectorAll(".speed-option")],
 	gainInput: document.getElementById("gain"),
 	gainLabels: [...document.querySelectorAll(".gain-labels span")],

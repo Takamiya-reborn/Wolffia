@@ -7,6 +7,7 @@ import { createLyricsController } from "./js/lyrics.js";
 import { setupOverlayScrollbar } from "./js/scrollbar.js";
 
 const SEEK_STEP = 5;
+const RIGHT_ARROW_HOLD_DELAY = 300;
 const VOLUME_STEP = 0.05;
 const TITLE_FADE_WIDTH = 28;
 // 列表宽度拖拽范围使用视口比例，避免窗口缩放时与固定像素边界冲突
@@ -34,12 +35,15 @@ let shuffleDir = null;
 let shuffleQueue = [];
 let artworkMode = false;
 let videoMode = false;
+let rightArrowHoldTimer = null;
+let rightArrowLongPress = false;
+let playbackRateBeforeRightArrowHold = 1;
 
 const { media, list, listResizer, listCollapseToggle, listFooter, volume, volumeValue, volumeControl, volumePopup, duration, progress, lyricsBg, lyricsArea, lyricsArtToggle, pinToggle, fullscreenToggle,
 	lyricsWrapper: wrapper, lyricsContainer, playToggle, muteToggle, currentTime, playlist, playlistCount, playlistName,
 	songsScrollbar, songsScrollbarThumb,
 	loopModeToggle, songContextMenu, titleContextMenu, playbackRateMenu,
-	playbackRateToggle, playbackRateOptions, playerHeader, currentTitle, titleText,
+	playbackRateToggle, playbackRateOptions, playbackRateIndicator, playerHeader, currentTitle, titleText,
 	gainInput, gainLabels } = dom;
 
 // 增益走 Web Audio（createMediaElementSource）时，无 CORS 头的跨源媒体会被
@@ -794,6 +798,11 @@ function setPlaybackRate(rate) {
 	});
 }
 
+function setRightArrowIndicatorVisible(visible) {
+	playbackRateIndicator.classList.toggle("is-visible", visible);
+	playbackRateIndicator.setAttribute("aria-hidden", String(!visible));
+}
+
 function setPlaybackRateMenuOpen(open) {
 	playbackRateMenu.classList.toggle("is-visible", open);
 	playbackRateToggle.setAttribute("aria-expanded", String(open));
@@ -954,6 +963,18 @@ function seekBy(seconds) {
 	lyrics.update(media.currentTime);
 }
 
+function cancelRightArrowHold() {
+	if (rightArrowHoldTimer !== null) {
+		clearTimeout(rightArrowHoldTimer);
+		rightArrowHoldTimer = null;
+	}
+	if (rightArrowLongPress) {
+		setPlaybackRate(playbackRateBeforeRightArrowHold);
+		setRightArrowIndicatorVisible(false);
+		rightArrowLongPress = false;
+	}
+}
+
 function changeVolumeBy(delta) {
 	const next = Math.min(Math.max(media.volume + delta, 0), 1);
 	media.volume = next;
@@ -985,7 +1006,15 @@ document.addEventListener("keydown", (event) => {
 			break;
 		case "ArrowRight":
 			event.preventDefault();
-			seekBy(SEEK_STEP);
+			if (!event.repeat && rightArrowHoldTimer === null && !rightArrowLongPress) {
+				rightArrowHoldTimer = setTimeout(() => {
+					rightArrowHoldTimer = null;
+					rightArrowLongPress = true;
+					playbackRateBeforeRightArrowHold = media.playbackRate;
+					setPlaybackRate(2);
+					setRightArrowIndicatorVisible(true);
+				}, RIGHT_ARROW_HOLD_DELAY);
+			}
 			break;
 		case "ArrowUp":
 			event.preventDefault();
@@ -1009,6 +1038,20 @@ document.addEventListener("keydown", (event) => {
 			break;
 	}
 });
+
+document.addEventListener("keyup", (event) => {
+	if (event.key !== "ArrowRight") return;
+	event.preventDefault();
+	if (rightArrowHoldTimer !== null) {
+		clearTimeout(rightArrowHoldTimer);
+		rightArrowHoldTimer = null;
+		seekBy(SEEK_STEP);
+		return;
+	}
+	cancelRightArrowHold();
+});
+
+window.addEventListener("blur", cancelRightArrowHold);
 
 media.onloadedmetadata = updatePlayerState;
 media.onplay = updatePlayerState;

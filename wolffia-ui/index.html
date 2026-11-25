@@ -233,6 +233,17 @@
           class="player-controls hairline-t relative z-10 -mx-10 flex w-[calc(100%+80px)] shrink-0 items-center gap-3.5 self-stretch bg-[linear-gradient(180deg,rgba(23,28,23,0.7)_0%,rgba(16,20,16,0.82)_100%)] px-10 pb-6 pt-4 shadow-[0_-12px_32px_rgba(0,0,0,0.22)] backdrop-blur-xl max-[760px]:-mx-5.5 max-[760px]:w-[calc(100%+44px)] max-[760px]:gap-2 max-[760px]:px-5.5 max-[760px]:pb-5 @max-[640px]:gap-1.5 @max-[520px]:gap-1"
           aria-label="播放控制"
         >
+          <div
+            id="playback-rate-indicator"
+            class="playback-rate-indicator"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            aria-hidden="true"
+          >
+            <i data-lucide="fast-forward" aria-hidden="true"></i>
+            <span>倍速播放中</span>
+          </div>
           <button
             id="play-toggle"
             class="play-toggle grid h-10 w-10 shrink-0 place-items-center rounded-full border-0 bg-(--accent) p-0 text-[#182018] transition-[transform,background] duration-150 hover:scale-105 hover:bg-[#c4e0bc] active:scale-95"

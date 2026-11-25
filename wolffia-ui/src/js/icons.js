@@ -23,6 +23,7 @@ import {
 	SquareArrowOutUpRight,
 	Minus,
 	Plus,
+	FastForward,
 	createIcons,
 } from "lucide";
 
@@ -52,6 +53,7 @@ export const lucideIcons = {
 	SquareArrowOutUpRight,
 	Minus,
 	Plus,
+	FastForward,
 };
 
 export function refreshIcons(root = document) {
