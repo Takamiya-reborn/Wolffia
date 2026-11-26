@@ -66,11 +66,11 @@ cp dist/wolffia.exe "release/Wolffia_${tag}_pyi_onefile.exe"
 [ -d dist/wolffia ] || { echo "找不到 dist/wolffia" >&2; exit 1; }
 (cd dist/wolffia && zip -qr "$root/release/Wolffia_${tag}_pyi_onedir.zip" .)
 
-[ -f "wolffia-ui/dist-electron/Wolffia-${version}-electron-setup.exe" ] || { echo "找不到 wolffia-ui/dist-electron/Wolffia-${version}-electron-setup.exe" >&2; exit 1; }
-cp "wolffia-ui/dist-electron/Wolffia-${version}-electron-setup.exe" "release/Wolffia_${tag}_electron_setup.exe"
+[ -f "wolffia-ui/dist-electron/Wolffia-electron-setup.exe" ] || { echo "找不到 wolffia-ui/dist-electron/Wolffia-electron-setup.exe" >&2; exit 1; }
+cp "wolffia-ui/dist-electron/Wolffia-electron-setup.exe" "release/Wolffia_${tag}_electron_setup.exe"
 
-[ -f "wolffia-ui/dist-electron/Wolffia-${version}-portable.exe" ] || { echo "找不到 wolffia-ui/dist-electron/Wolffia-${version}-portable.exe" >&2; exit 1; }
-cp "wolffia-ui/dist-electron/Wolffia-${version}-portable.exe" "release/Wolffia_${tag}_electron_portable.exe"
+[ -f "wolffia-ui/dist-electron/Wolffia-portable.exe" ] || { echo "找不到 wolffia-ui/dist-electron/Wolffia-portable.exe" >&2; exit 1; }
+cp "wolffia-ui/dist-electron/Wolffia-portable.exe" "release/Wolffia_${tag}_electron_portable.exe"
 
 echo "已生成:"
 ls -lh release

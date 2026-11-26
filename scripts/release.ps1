@@ -77,12 +77,12 @@ if (!(Test-Path $src)) { throw "找不到 $src" }
 Compress-Archive -Path "$src/*" -DestinationPath "$releaseDir/Wolffia_${tag}_pyi_onedir.zip"
 
 # electron NSIS 安装包
-$src = "wolffia-ui/dist-electron/Wolffia-${version}-electron-setup.exe"
+$src = "wolffia-ui/dist-electron/Wolffia-electron-setup.exe"
 if (!(Test-Path $src)) { throw "找不到 $src" }
 [System.IO.File]::Copy((Resolve-Path $src), "$root/$releaseDir/Wolffia_${tag}_electron_setup.exe", $true)
 
 # electron 便携版
-$src = "wolffia-ui/dist-electron/Wolffia-${version}-portable.exe"
+$src = "wolffia-ui/dist-electron/Wolffia-portable.exe"
 if (!(Test-Path $src)) { throw "找不到 $src" }
 [System.IO.File]::Copy((Resolve-Path $src), "$root/$releaseDir/Wolffia_${tag}_electron_portable.exe", $true)
 

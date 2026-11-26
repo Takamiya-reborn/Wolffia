@@ -54,13 +54,13 @@ def get_asset_path(filename):
 
 
 def _apply_title_bar_theme():
-    """安装自定义标题条：加高、界面配色、保留系统按钮。
+    """安装自定义标题条与托盘：加高、界面配色、保留系统按钮。
 
     webview.start 的回调跑在线程池，WinForms 实例可能尚未创建，
     需要轮询等待；安装涉及窗体属性与 WndProc subclass，封送到 UI 线程"""
     from webview.platforms import winforms
 
-    from wolffia.core import titlebar
+    from wolffia.core import titlebar, tray
 
     for _ in range(100):
         instance = winforms.BrowserView.instances.get(webview.windows[0].uid)
@@ -70,8 +70,12 @@ def _apply_title_bar_theme():
     else:
         return
 
+    def _install():
+        titlebar.install(instance)
+        tray.install(instance)
+
     try:
-        instance.Invoke(winforms.Func[winforms.Type](lambda: titlebar.install(instance)))
+        instance.Invoke(winforms.Func[winforms.Type](_install))
     except Exception:
         # Invoke 内部异常会被 Mono 包装成 AggregateException 并触发
         # mscorlib 资源查找递归的 Assert 弹窗，这里拦截后打印

@@ -274,7 +274,7 @@ uv run python -m PyInstaller --onefile --noconsole --name wolffia --add-data "sr
 npm run build:electron
 ```
 
-会先构建前端，再用 electron-builder 打出 NSIS 安装包（`dist-electron/Wolffia-<版本>-electron-setup.exe`）。这条发布线不依赖 Python：扫描、歌词、封面和媒体服务由 `electron/backend/` 下的 Node 实现完成，安装包开箱即用。
+会先构建前端，再用 electron-builder 打出 NSIS 安装包（`dist-electron/Wolffia-electron-setup.exe`）。这条发布线不依赖 Python：扫描、歌词、封面和媒体服务由 `electron/backend/` 下的 Node 实现完成，安装包开箱即用。
 
 开发调试用一条命令（自动后台启动 Vite、等就绪后拉起 Electron，退出时自动清理）：
 

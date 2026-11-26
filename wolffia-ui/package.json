@@ -50,7 +50,7 @@
       "icon": "../assets/icon.ico"
     },
     "nsis": {
-      "artifactName": "Wolffia-${version}-electron-setup.${ext}",
+      "artifactName": "Wolffia-electron-setup.${ext}",
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
@@ -61,7 +61,7 @@
       "license": "../../LICENSE"
     },
     "portable": {
-      "artifactName": "Wolffia-${version}-portable.${ext}"
+      "artifactName": "Wolffia-portable.${ext}"
     }
   },
   "allowScripts": {

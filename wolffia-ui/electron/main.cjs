@@ -1,12 +1,23 @@
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
-const { app, BrowserWindow, dialog, ipcMain, shell } = require("electron");
+const {
+  app,
+  BrowserWindow,
+  Tray,
+  Menu,
+  nativeTheme,
+  dialog,
+  ipcMain,
+  shell,
+} = require("electron");
 
 // 无残留运行：Chromium 的 Local Storage / Cache / GPUCache 默认落在
 // %APPDATA%/<app>，统一重定向到本次启动的临时目录，退出时整体删除
 const tempUserData = path.join(os.tmpdir(), `wolffia-electron-${process.pid}`);
 app.setPath("userData", tempUserData);
+// 固定深色渲染 Electron 自绘的原生界面(托盘菜单等),不跟随系统主题
+nativeTheme.themeSource = "dark";
 app.on("will-quit", () => {
 	try {
 		fs.rmSync(tempUserData, { recursive: true, force: true, maxRetries: 5 });
@@ -26,22 +37,48 @@ const MIN_WINDOW_HEIGHT = 480;
 let mainWindow = null;
 let mediaServer = null;
 let musicRoot = null;
+let tray = null;
+let quitting = false;
 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();
 } else {
   app.on("second-instance", () => {
-    if (!mainWindow) return;
-    if (mainWindow.isMinimized()) {
-      mainWindow.restore();
-    }
-    mainWindow.focus();
+    showWindow();
   });
 
   app.whenReady().then(() => {
     createWindow();
+    createTray();
   });
+}
+
+function showWindow() {
+  if (!mainWindow) return;
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore();
+  }
+  mainWindow.show();
+  mainWindow.focus();
+}
+
+function createTray() {
+  tray = new Tray(path.join(__dirname, "tray.ico"));
+  tray.setToolTip("Wolffia");
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: "显示 Wolffia", click: showWindow },
+      { type: "separator" },
+      { label: "退出", click: quitApp },
+    ]),
+  );
+  tray.on("click", showWindow);
+}
+
+function quitApp() {
+  quitting = true;
+  app.quit();
 }
 
 function createWindow() {
@@ -75,6 +112,13 @@ function createWindow() {
   }
 
   mainWindow.once("ready-to-show", () => mainWindow.show());
+  // 关闭改为最小化到托盘，后台继续播放；真正退出走托盘菜单
+  mainWindow.on("close", (event) => {
+    if (!quitting) {
+      event.preventDefault();
+      mainWindow.hide();
+    }
+  });
   // 状态回推给渲染层,驱动最大化/还原图标与全屏时隐藏标题栏
   const sendMaximized = () =>
     mainWindow?.webContents.send("window:maximized", mainWindow.isMaximized());
@@ -96,7 +140,13 @@ app.on("window-all-closed", () => {
 });
 
 app.on("before-quit", () => {
+  quitting = true;
   closeMediaServer();
+  // 立即清掉托盘图标，不等到进程退出
+  if (tray) {
+    tray.destroy();
+    tray = null;
+  }
 });
 
 function closeMediaServer() {
