@@ -1057,6 +1057,59 @@ media.onloadedmetadata = updatePlayerState;
 media.onplay = updatePlayerState;
 media.onpause = updatePlayerState;
 
+// —— 音频设备变更自动暂停 ——
+// 耳机断电/断连后系统会把声音切到默认设备（通常是外放），音量可能突然
+// 变大惊扰人。pywebview 构建由原生 WASAPI 监控驱动（core/device_monitor.py：
+// WebView2 的 file:// 页面拿不到设备授权，enumerateDevices 只返回匿名列表，
+// JS 侧无法对比设备集合），这里只提供暂停入口；Electron 构建无原生监控，
+// 用 devicechange 事件自行检测
+window.__wolffiaPauseOnDeviceChange = () => {
+	if (media.paused) return;
+	media.pause();
+};
+
+if (window.electronWindow && navigator.mediaDevices) {
+	let lastOutputIds = null;
+
+	const snapshotOutputIds = async () => {
+		const devices = await navigator.mediaDevices.enumerateDevices();
+		// "default"/"communications" 是默认设备的别名，同一物理设备会重复出现，
+		// 只统计真实设备 id；只看输出设备，插拔麦克风等输入设备不触发暂停
+		return devices
+			.filter(
+				(device) =>
+					device.kind === "audiooutput" &&
+					device.deviceId !== "default" &&
+					device.deviceId !== "communications",
+			)
+			.map((device) => device.deviceId)
+			.sort()
+			.join("|");
+	};
+
+	snapshotOutputIds().then((ids) => {
+		lastOutputIds = ids;
+	});
+
+	navigator.mediaDevices.addEventListener("devicechange", async () => {
+		if (media.paused) return;
+		const devices = await navigator.mediaDevices.enumerateDevices();
+		const outputs = devices.filter(
+			(device) =>
+				device.kind === "audiooutput" &&
+				device.deviceId !== "default" &&
+				device.deviceId !== "communications",
+		);
+		const ids = outputs.map((device) => device.deviceId).sort().join("|");
+		// deviceId 被匿名（空字符串）时集合对比失效，事件本身就是信号
+		const changed =
+			outputs.some((device) => !device.deviceId) ||
+			(lastOutputIds !== null && ids !== lastOutputIds);
+		lastOutputIds = ids;
+		if (changed) media.pause();
+	});
+}
+
 window.addEventListener("resize", () => {
 	// 拖宽列表后再缩小窗口时，把宽度收回可用范围内；
 	// 收起状态下 rect 宽度为 0，回写会丢掉原宽度，跳过

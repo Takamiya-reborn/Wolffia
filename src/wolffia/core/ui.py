@@ -6,11 +6,14 @@ from pathlib import Path
 import webview
 
 from wolffia.core.api import ApplicationMutex, PlayerApi, bring_existing_window_to_top
+from wolffia.core.device_monitor import DeviceChangeMonitor
 
 _MUTEX_NAME = "Local\\Wolffia.Application.SingleInstance"
 _WINDOW_TITLE = "Wolffia"
 MIN_WINDOW_WIDTH = 640
 MIN_WINDOW_HEIGHT = 480
+
+_device_monitor = None
 
 # WebView2 启动参数：压缩引擎常驻开销。
 # 单页面播放器用不到的引擎特性全部关闭：
@@ -53,6 +56,11 @@ def get_asset_path(filename):
     return os.fspath(roots[0] / "ui" / filename)
 
 
+def _on_window_ready():
+    _apply_title_bar_theme()
+    _start_device_monitor()
+
+
 def _apply_title_bar_theme():
     """安装自定义标题条与托盘：加高、界面配色、保留系统按钮。
 
@@ -82,6 +90,31 @@ def _apply_title_bar_theme():
         import traceback
 
         traceback.print_exc()
+
+
+def _notify_pause_on_device_change(window):
+    try:
+        window.evaluate_js(
+            "window.__wolffiaPauseOnDeviceChange && window.__wolffiaPauseOnDeviceChange()"
+        )
+    except Exception:
+        # 窗口销毁期间 evaluate_js 会抛错，退出流程中忽略
+        pass
+
+
+def _start_device_monitor():
+    """音频设备变化（断连/新增/默认切换）且正在播放时让前端暂停。
+
+    耳机断电断连后系统会把声音切到默认输出（常为外放），音量突然变大
+    会惊扰人。监控必须放原生侧：WebView2 的 file:// 页面拿不到设备授权，
+    JS 的 enumerateDevices 只返回匿名列表，devicechange 对比不出设备变化"""
+    global _device_monitor
+    window = webview.windows[0]
+    monitor = DeviceChangeMonitor(
+        lambda: _notify_pause_on_device_change(window)
+    )
+    monitor.start()
+    _device_monitor = monitor
 
 
 class PlayerWindow:
@@ -125,8 +158,10 @@ class PlayerWindow:
                 min_size=(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT),
             )
             self._started = True
-            webview.start(_apply_title_bar_theme)
+            webview.start(_on_window_ready)
         finally:
             api.close_static_server()
+            if _device_monitor is not None:
+                _device_monitor.stop()
             mutex.release()
             self._application_mutex = None

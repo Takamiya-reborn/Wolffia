@@ -38,6 +38,9 @@ Wolffia 面向个人本地音乐库，重点是打开即用：选择音乐文件
   - 【音频名称】.【扩展名】 -> 【音频名称】.【扩展名】.vtt
 - 解析 LRC 时间标签或 Cue 时间轴并高亮当前歌词
 - 提供四种播放方式：单次播放、列表循环、单曲循环、随机播放
+- 检测音频输出设备变化并在播放中自动暂停：耳机断电断连后系统会把声音切到外放，音量突然变大容易惊扰人；设备断连、新增或默认输出切换时立即暂停
+  - Python 线通过 WASAPI `IMMNotificationClient` 在原生侧监听（WebView2 的 `file://` 页面拿不到设备授权，`enumerateDevices` 只返回匿名列表，JS 侧检测不到）
+  - Electron 线由前端 `devicechange` 事件检测
 - 使用本机 HTTP Range 服务读取音频，适合大文件播放
 - 可打包单个 Windows `.exe`，免安装
 - 如果担心程序经常读写磁盘Temp消耗磁盘寿命，就使用带目录文件打包后的
@@ -122,6 +125,7 @@ Wolffia/
 │   ├── __init__.py               # 创建窗口并启动应用
 │   ├── core/
 │   │   ├── api.py                # pywebview API 和专辑图提取
+│   │   ├── device_monitor.py     # WASAPI 设备监控，输出设备变化时暂停播放
 │   │   ├── scanner.py            # 扫描音频并查找同目录歌词
 │   │   ├── server.py             # 本地静态文件和 Range HTTP 服务
 │   │   ├── ui.py                 # pywebview 窗口和文件夹选择
