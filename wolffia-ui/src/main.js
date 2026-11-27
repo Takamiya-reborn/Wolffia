@@ -339,7 +339,26 @@ function updatePlayerState() {
 	muteToggle.setAttribute("aria-label", isMuted ? "取消静音" : "静音");
 	muteToggle.setAttribute("aria-pressed", isMuted);
 	muteToggle.title = isMuted ? "取消静音 (M)" : "静音 (M)";
+	updateTrayMenu();
 }
+
+let lastTrayState = null;
+function updateTrayMenu() {
+	const api = window.pywebview?.api;
+	if (typeof api?.set_tray_state !== "function") return;
+
+	const isPlaying = !media.paused;
+	const isMuted = media.muted || media.volume === 0;
+	const nextState = `${isPlaying}:${isMuted}`;
+	if (nextState === lastTrayState) return;
+	lastTrayState = nextState;
+	api.set_tray_state(isPlaying, isMuted).catch(console.error);
+}
+
+media.addEventListener("play", updateTrayMenu);
+media.addEventListener("pause", updateTrayMenu);
+media.addEventListener("volumechange", updateTrayMenu);
+window.addEventListener("pywebviewready", updateTrayMenu, { once: true });
 
 function initData(songsData, port) {
 	songs = songsData;

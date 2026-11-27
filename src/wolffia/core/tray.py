@@ -6,6 +6,7 @@
 """
 
 import sys
+import threading
 import traceback
 
 _quitting = False
@@ -50,6 +51,23 @@ def _install(instance):
         _quitting = True
         instance.Close()
 
+    def click_player_control(control_id):
+        from webview import windows
+
+        # WebView2 evaluate_js waits synchronously for a UI-thread callback.
+        # Keep it off the WinForms tray event thread to avoid deadlocking the UI.
+        threading.Thread(
+            target=windows[0].evaluate_js,
+            args=(f'document.getElementById("{control_id}")?.click()',),
+            daemon=True,
+        ).start()
+
+    def toggle_playback(_sender, _args):
+        click_player_control("play-toggle")
+
+    def toggle_mute(_sender, _args):
+        click_player_control("mute-toggle")
+
     tray = NotifyIcon()
     tray.Icon = Icon.ExtractAssociatedIcon(sys.executable)
     tray.Text = "Wolffia"
@@ -57,8 +75,13 @@ def _install(instance):
 
     menu = ContextMenuStrip()
     show_item = ToolStripMenuItem("显示 Wolffia")
+    from wolffia.core.api import PlayerApi
+
+    is_playing, is_muted = PlayerApi()._tray_state
+    play_item = ToolStripMenuItem("暂停" if is_playing else "播放")
+    mute_item = ToolStripMenuItem("取消静音" if is_muted else "静音")
     quit_item = ToolStripMenuItem("退出")
-    menu.Items.AddRange([show_item, quit_item])
+    menu.Items.AddRange([show_item, play_item, mute_item, quit_item])
     tray.ContextMenuStrip = menu
 
     # Click 事件左右键都会触发,右键时 Activate 会抢走前台导致
@@ -80,14 +103,22 @@ def _install(instance):
     # 事件会抛异常（同 titlebar.py 的做法）
     closing_handler = FormClosingEventHandler(on_form_closing)
     show_handler = EventHandler(show)
+    play_handler = EventHandler(toggle_playback)
+    mute_handler = EventHandler(toggle_mute)
     quit_handler = EventHandler(quit)
     instance.FormClosing += closing_handler
     show_item.Click += show_handler
+    play_item.Click += play_handler
+    mute_item.Click += mute_handler
     quit_item.Click += quit_handler
     instance._wolffia_tray = tray
+    instance._wolffia_tray_play_item = play_item
+    instance._wolffia_tray_mute_item = mute_item
     instance._wolffia_tray_handlers = (
         click_handler,
         closing_handler,
         show_handler,
+        play_handler,
+        mute_handler,
         quit_handler,
     )

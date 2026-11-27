@@ -38,6 +38,8 @@ let mainWindow = null;
 let mediaServer = null;
 let musicRoot = null;
 let tray = null;
+let trayIsPlaying = false;
+let trayIsMuted = false;
 let quitting = false;
 
 const gotLock = app.requestSingleInstanceLock();
@@ -63,16 +65,34 @@ function showWindow() {
   mainWindow.focus();
 }
 
+function clickPlayerControl(controlId) {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.webContents
+    .executeJavaScript(`document.getElementById("${controlId}")?.click()`)
+    .catch(console.error);
+}
+
+function buildTrayMenu() {
+  return Menu.buildFromTemplate([
+    { label: "显示 Wolffia", click: showWindow },
+    { type: "separator" },
+    {
+      label: trayIsPlaying ? "暂停" : "播放",
+      click: () => clickPlayerControl("play-toggle"),
+    },
+    {
+      label: trayIsMuted ? "取消静音" : "静音",
+      click: () => clickPlayerControl("mute-toggle"),
+    },
+    { type: "separator" },
+    { label: "退出", click: quitApp },
+  ]);
+}
+
 function createTray() {
   tray = new Tray(path.join(__dirname, "tray.ico"));
   tray.setToolTip("Wolffia");
-  tray.setContextMenu(
-    Menu.buildFromTemplate([
-      { label: "显示 Wolffia", click: showWindow },
-      { type: "separator" },
-      { label: "退出", click: quitApp },
-    ]),
-  );
+  tray.setContextMenu(buildTrayMenu());
   tray.on("click", showWindow);
 }
 
@@ -254,6 +274,16 @@ ipcMain.handle("api:show-properties", async (_event, relativePath) => {
 
 ipcMain.handle("api:close-static-server", () => {
   closeMediaServer();
+});
+
+ipcMain.handle("tray:set-state", (_event, isPlaying, isMuted) => {
+  if (typeof isPlaying !== "boolean" || typeof isMuted !== "boolean") {
+    return false;
+  }
+  trayIsPlaying = isPlaying;
+  trayIsMuted = isMuted;
+  if (tray) tray.setContextMenu(buildTrayMenu());
+  return true;
 });
 
 // 外链走系统浏览器，不在应用内开新窗口；只放行 http(s)

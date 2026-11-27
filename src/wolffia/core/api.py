@@ -213,10 +213,38 @@ class PlayerApi:
         self._art_cache = {}
         self._static_server = None
         self._static_server_thread = None
+        self._tray_state = (False, False)
         self._initialized = True
 
     def _window(self):
         return webview.windows[0]
+
+    def set_tray_state(self, is_playing, is_muted):
+        if not isinstance(is_playing, bool) or not isinstance(is_muted, bool):
+            return False
+
+        self._tray_state = (is_playing, is_muted)
+        if sys.platform != "win32":
+            return True
+
+        from webview.platforms import winforms
+
+        window = self._window()
+        instance = winforms.BrowserView.instances.get(window.uid)
+        if instance is None:
+            return True
+
+        def _update_menu():
+            current_playing, current_muted = self._tray_state
+            play_item = getattr(instance, "_wolffia_tray_play_item", None)
+            mute_item = getattr(instance, "_wolffia_tray_mute_item", None)
+            if play_item is not None:
+                play_item.Text = "暂停" if current_playing else "播放"
+            if mute_item is not None:
+                mute_item.Text = "取消静音" if current_muted else "静音"
+
+        instance.Invoke(winforms.Func[winforms.Type](_update_menu))
+        return True
 
     def set_always_on_top(self, enabled):
         """切换窗口置顶显示。

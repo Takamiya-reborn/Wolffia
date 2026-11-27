@@ -16,6 +16,8 @@ contextBridge.exposeInMainWorld("pywebview", {
       ipcRenderer.invoke("api:show-properties", relativePath),
     open_url: (url) => ipcRenderer.invoke("api:open-url", url),
     close_static_server: () => ipcRenderer.invoke("api:close-static-server"),
+    set_tray_state: (isPlaying, isMuted) =>
+      ipcRenderer.invoke("tray:set-state", isPlaying, isMuted),
     set_always_on_top: (enabled) =>
       ipcRenderer.invoke("window:set-always-on-top", enabled),
     set_native_fullscreen: (enabled) =>
